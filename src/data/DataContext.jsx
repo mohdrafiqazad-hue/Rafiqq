@@ -95,7 +95,15 @@ export function DataProvider({ store, user, role = 'owner', team = null, onLogou
       byLabour: groupByLabour(data.entries),
       labourById: new Map(labours.map((l) => [l.id, l])),
       getEntry: (l, d) => entryIndex.get(entryKey(l, d)) || null,
-      saveEntry: (e, isUpdate) => run(store.saveEntry(e), isUpdate ? t('msg.updated') : t('msg.saved')),
+      saveEntry: (e, isUpdate) => {
+        // Kisne entry ki (malik ke WhatsApp message me dikhta hai). Badalne par asli likhne wala hi rehta hai.
+        const old = entryIndex.get(entryKey(e.l, e.d));
+        const who = user?.name || user?.email || (store.kind === 'local' ? 'Demo' : '');
+        const meta = old && isUpdate
+          ? { by: old.by || '', byRole: old.byRole || '', at: old.at || '', editedBy: who, editedAt: new Date().toISOString() }
+          : { by: who, byRole: role, at: new Date().toISOString() };
+        run(store.saveEntry({ ...e, ...meta }), isUpdate ? t('msg.updated') : t('msg.saved'));
+      },
       deleteEntry: (l, d) => run(store.deleteEntry(l, d), t('msg.deleted')),
       saveLabour: (lab, msg) => run(store.saveLabour(lab), msg || t('msg.labourSaved')),
       addLabour: (name, phone) => {

@@ -28,6 +28,47 @@ Saare log ek hi company ka data dekhte hain. Koi bhi Google se login kar sakta h
 Ye rok sirf app ke buttons me nahi, **Firebase server ke rules (`firestore.rules`) me bhi hai**, isliye koi chalaaki se bhi purani entry nahi badal sakta.
 Malik ka account Firestore me `members/{uid}` (role `owner`) se tay hota hai.
 
+### Malik ko WhatsApp alert (nayi entry par)
+Manager ya labour jaise hi **nayi entry** save karta hai, company ke **WhatsApp Business number** se malik ko message jaata hai:
+labour ka naam, date, cooler le gaye, wapis aaye, market me baaki, lage, paisa bane, paisa mila, kul paisa baaki aur entry kisne ki.
+Ye kaam server par chalne wala function (`functions/`) karta hai. Iske liye neeche wala ek baar ka setup chahiye.
+
+**A. Firebase Blaze plan (card judta hai, chhote kaam ke liye bill lagbhag ₹0)**
+1. https://console.firebase.google.com/project/madhur-ganga-minerals/usage/details kholein, phir **Modify plan** / **Upgrade** → **Blaze** chunein aur card jodein.
+2. Wahin **budget alert** (jaise ₹100) laga dein, taaki kuch bhi kharcha ho to email aa jaye.
+
+**B. Meta WhatsApp Business setup**
+1. https://business.facebook.com par company ka **Business account** banayein (Madhur Ganga Minerals).
+2. https://developers.facebook.com/apps par **Create app** dabayein → type **Business** → app me **WhatsApp** product jodein.
+3. **WhatsApp → API Setup** me company ka **phone number** jodein aur OTP se verify karein. Wahan dikhne wala **Phone Number ID** note karein.
+   - Jo number abhi WhatsApp / WhatsApp Business app me chal raha hai, use jodne par app wala istemal band ho sakta hai. Behtar hai alag naya number lein.
+   - Sirf try karne ke liye Meta ka free **test number** bhi chalta hai, lekin usme "to" list me malik ka number verify karna padta hai.
+4. Token: **Business Settings → Users → System users** me ek **Admin** system user banayein. Use app aur WhatsApp account par **Full control** dein, phir **Generate token** dabayein (permissions: `whatsapp_business_messaging`, `whatsapp_business_management`; expiry: **Never**). Ye **Access token** hai, ise kisi ko na bhejein.
+5. **WhatsApp Manager → Payment settings** me payment method jodein. Utility message ka rate har message ke hisab se lagta hai; aaj ka rate Meta ki pricing page par dekh lein.
+6. **WhatsApp Manager → Message templates → Create template**: Category **Utility**, Name **entry_alert**, Language **English**. Body me ye text daalein (har `{{n}}` ke liye sample bhi bharna hoga):
+```
+Madhur Ganga Minerals - nayi entry
+Labour: {{1}}
+Date: {{2}}
+Cooler le gaye: {{3}}
+Wapis aaye: {{4}}
+Market me baaki: {{5}} cooler
+Lage: {{6}}, Paisa bane: Rs {{7}}
+Paisa mila: Rs {{8}}
+Kul paisa baaki: Rs {{9}}
+Entry ki: {{10}}
+- MGM Cooler Hisab
+```
+   Template **Approved** hone ka intezaar karein (aksar kuch minute se kuch ghante).
+7. Malik apne WhatsApp se company business number par ek baar "Hi" bhej de.
+
+**C. App me setting**
+App → Labour → ⚙️ Settings → **WhatsApp alert** card: Alert chalu karein, malik ka number, Phone Number ID, Access token, template naam `entry_alert`, bhasha `en` bharein → **Save** → **📤 Test message bhejein**.
+
+**D. Function deploy (ek baar)**: Blaze chalu hone ke baad `npm run deploy:functions` (Claude se karwa sakte hain).
+
+Token aur setting `private/whatsapp` document me rehti hai, jise sirf malik padh sakta hai (Firestore rules) aur server function.
+
 ### Hisab ke formula
 - Paisa bane = Lage × Rate (us din ka rate entry ke saath save hota hai; rate badalne se purani entry nahi badalti)
 - Cooler baaki = Pichla (opening) cooler + Σ(Le gaye − Wapis aaye)

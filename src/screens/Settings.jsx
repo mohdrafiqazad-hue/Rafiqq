@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useData } from '../data/DataContext.jsx';
 import { Sheet, useUI } from '../components/ui.jsx';
 import { NumField } from '../components/common.jsx';
@@ -8,6 +8,105 @@ import { fmtDateTime, today } from '../lib/dates.js';
 import { downloadFile } from '../export/index.js';
 import { t } from '../i18n/index.js';
 import { LangPicker } from '../i18n/LangContext.jsx';
+
+/** Malik: company WhatsApp Business se entry ke message (server function bhejta hai) */
+function WhatsAppCard() {
+  const D = useData();
+  const { toast } = useUI();
+  const [fb, setFb] = useState(null);
+  const [state, setState] = useState(null);
+  const [form, setForm] = useState(null);
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => {
+    let unsub = () => {};
+    let alive = true;
+    import('../data/firebaseAdapter.js').then((mod) => {
+      if (!alive) return;
+      setFb(mod);
+      unsub = mod.watchWhatsApp(setState, (e) => toast(e.message, 'err'));
+    });
+    return () => { alive = false; unsub(); };
+  }, [toast]);
+
+  useEffect(() => {
+    if (state?.cfg && !form) {
+      const c = state.cfg;
+      setForm({ enabled: !!c.enabled, ownerPhone: c.ownerPhone || '', phoneNumberId: c.phoneNumberId || '', token: '', template: c.template || '', lang: c.lang || 'en', ownerToo: !!c.ownerToo });
+    }
+  }, [state, form]);
+
+  if (!form) return null;
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
+  const save = () => {
+    const digits = form.ownerPhone.replace(/\D/g, '');
+    if (form.enabled && digits.length < 10) return toast(t('wa.errPhone'), 'err');
+    const cfg = { ...form, ownerPhone: digits, phoneNumberId: form.phoneNumberId.trim(), template: form.template.trim(), lang: form.lang.trim() || 'en' };
+    if (!cfg.token) delete cfg.token; // khaali = purana token rehne do
+    else cfg.token = cfg.token.trim();
+    fb.saveWhatsApp(cfg).catch((e) => toast(e.message, 'err'));
+    setForm((f) => ({ ...f, token: '' }));
+    toast(t('wa.saved'));
+  };
+  const test = () => {
+    setTesting(true);
+    let done = false;
+    const unsub = fb.sendWaTest((r) => {
+      done = true;
+      setTesting(false);
+      toast(r.ok ? t('wa.testOk') : t('wa.testFail', { e: r.error }), r.ok ? 'ok' : 'err', 8000);
+    });
+    setTimeout(() => {
+      if (!done) {
+        unsub();
+        setTesting(false);
+        toast(t('wa.noServer'), 'err', 8000);
+      }
+    }, 60000);
+  };
+  const st = state?.status;
+
+  return (
+    <div className="card">
+      <div className="card-title">{t('wa.cardTitle')}</div>
+      <p className="muted small">{t('wa.cardHelp')}</p>
+      <p className="warn-box">{t('wa.needSetup')}</p>
+      <div className="form">
+        <label className="check">
+          <input type="checkbox" checked={form.enabled} onChange={set('enabled')} />
+          {t('wa.enabled')}
+        </label>
+        <label className="field"><span>{t('wa.ownerPhone')}</span>
+          <input value={form.ownerPhone} onChange={set('ownerPhone')} inputMode="tel" type="tel" placeholder="98765 43210" />
+        </label>
+        <label className="field"><span>{t('wa.phoneId')}</span>
+          <input value={form.phoneNumberId} onChange={set('phoneNumberId')} inputMode="numeric" autoComplete="off" />
+        </label>
+        <label className="field"><span>{t('wa.token')}</span>
+          <input value={form.token} onChange={set('token')} type="password" autoComplete="off" placeholder={state?.cfg?.token ? t('wa.tokenSet') : ''} />
+        </label>
+        <label className="field"><span>{t('wa.template')}</span>
+          <input value={form.template} onChange={set('template')} autoComplete="off" placeholder="entry_alert" />
+          <span className="muted small field-help">{t('wa.templateHelp')}</span>
+        </label>
+        <label className="field"><span>{t('wa.lang')}</span>
+          <input value={form.lang} onChange={set('lang')} autoComplete="off" placeholder="en" />
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={form.ownerToo} onChange={set('ownerToo')} />
+          {t('wa.ownerToo')}
+        </label>
+        <div className="row-actions">
+          <button className="btn grow" onClick={test} disabled={testing || !state?.cfg?.token}>{testing ? t('wa.testing') : t('wa.test')}</button>
+          <button className="btn btn-primary grow" onClick={save}>{t('s.save')}</button>
+        </div>
+        {st && (st.ok
+          ? <p className="small ok-text">{t('wa.lastOk', { what: st.last || '' })}</p>
+          : <p className="error-box">{t('wa.lastFail', { what: st.last || '', e: st.error || '' })}</p>)}
+      </div>
+    </div>
+  );
+}
 
 function Team() {
   const D = useData();
@@ -129,6 +228,7 @@ export default function Settings({ onBack }) {
       </div>
 
       <Team />
+      {D.can.team && D.storeKind === 'firebase' && <WhatsAppCard />}
 
       <div className="card">
         <div className="card-title">{t('s.lang')}</div>

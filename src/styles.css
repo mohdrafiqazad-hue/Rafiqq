@@ -306,3 +306,5 @@ label.datebar-label .hidden-date { pointer-events: auto; }
 .waiting p { margin: 0; }
 .waiting-icon { font-size: 44px; }
 .waiting-no { border-color: #f0b6b6; }
+.field-help { font-weight: 400; }
+.ok-text { color: var(--green); font-weight: 600; margin: 0; }
