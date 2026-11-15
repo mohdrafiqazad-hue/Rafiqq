@@ -96,7 +96,7 @@ function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, set
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" width="28" height="28" />
+          <img className="brand-logo" src={`${import.meta.env.BASE_URL}pwa-192.png`} alt="" width="34" height="34" />
           <div>
             <div className="brand-name">{COMPANY}</div>
             <div className="brand-sub">{t('app.sub')}{D.storeKind === 'firebase' ? ` · ${t(`role.${D.role}`)}` : ''}</div>

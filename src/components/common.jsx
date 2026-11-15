@@ -1,6 +1,6 @@
 // Chhote, baar-baar kaam aane wale components
 import { useRef, useState } from 'react';
-import { addDays, addMonths, fmtDateLong, fmtMonth, today } from '../lib/dates.js';
+import { addDays, addMonths, fmtDateLong, fmtMonth, monthGrid, today, weekdayNames } from '../lib/dates.js';
 import { fmtCell } from '../lib/reports.js';
 import { useUI } from './ui.jsx';
 import { canShareFiles, downloadFile, FORMATS, makeFile, shareFile } from '../export/index.js';
@@ -37,6 +37,48 @@ export function DateBar({ date, onChange }) {
       {date !== today() && (
         <button className="today-btn" onClick={() => onChange(today())}>{t('c.today')}</button>
       )}
+    </div>
+  );
+}
+
+/**
+ * Mahine ka calendar. marks: Map(date -> 'full' | 'part'); tap karke date chunein.
+ * Pichli aur agli dono taraf ja sakte hain.
+ */
+export function MonthCalendar({ date, onPick, marks }) {
+  const [ym, setYm] = useState(date.slice(0, 7));
+  const [lastDate, setLastDate] = useState(date);
+  if (date !== lastDate) {
+    // Bahar se date badli (jaise ‹ › se) to calendar bhi us mahine par chala jaye
+    setLastDate(date);
+    if (date.slice(0, 7) !== ym) setYm(date.slice(0, 7));
+  }
+  const td = today();
+  return (
+    <div className="cal">
+      <div className="cal-head">
+        <button className="nav-btn small" onClick={() => setYm(addMonths(ym, -1))} aria-label={t('d.prevMonth')}>‹</button>
+        <b>{fmtMonth(ym)}</b>
+        <button className="nav-btn small" onClick={() => setYm(addMonths(ym, 1))} aria-label={t('d.nextMonth')}>›</button>
+      </div>
+      <div className="cal-grid">
+        {weekdayNames().map((w, i) => <div key={`w${i}`} className="cal-wd">{w}</div>)}
+        {monthGrid(ym).map((d, i) => (d ? (
+          <button
+            key={d}
+            className={`cal-day ${d === date ? 'sel' : ''} ${d === td ? 'today' : ''} ${marks?.get(d) || ''}`}
+            onClick={() => onPick(d)}
+            aria-label={d}
+            aria-pressed={d === date}
+          >
+            {Number(d.slice(8))}
+          </button>
+        ) : <span key={`e${i}`} />))}
+      </div>
+      <div className="cal-legend">
+        <span><i className="lg full" /> {t('cal.full')}</span>
+        <span><i className="lg part" /> {t('cal.part')}</span>
+      </div>
     </div>
   );
 }

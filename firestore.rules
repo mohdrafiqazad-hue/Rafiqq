@@ -77,14 +77,6 @@ service cloud.firestore {
       allow write: if isOwner();
     }
 
-    // WhatsApp alert ki setting (token bhi) aur status: sirf malik. Server function admin access se padhta hai.
-    match /private/{doc} {
-      allow read, write: if isOwner();
-    }
-    match /private/whatsapp/tests/{id} {
-      allow read, create: if isOwner();
-    }
-
     // Purana (pehle version ka) har-user wala data: sirf padhne ke liye
     match /users/{uid}/{document=**} {
       allow read: if signedIn() && request.auth.uid == uid;

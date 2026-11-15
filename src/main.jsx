@@ -18,6 +18,22 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+/** App khulte hi logo (thodi der) */
+function Splash() {
+  const [phase, setPhase] = useState('show');
+  useEffect(() => {
+    const a = setTimeout(() => setPhase('hide'), 1300);
+    const b = setTimeout(() => setPhase('gone'), 1700);
+    return () => { clearTimeout(a); clearTimeout(b); };
+  }, []);
+  if (phase === 'gone') return null;
+  return (
+    <div className={`splash ${phase === 'hide' ? 'hide' : ''}`} aria-hidden="true">
+      <img src={`${import.meta.env.BASE_URL}pwa-512.png`} alt="" />
+    </div>
+  );
+}
+
 function Root() {
   const [updateReady, setUpdateReady] = useState(false);
   useEffect(() => {
@@ -28,6 +44,7 @@ function Root() {
     <LangProvider>
       <UIProvider>
         <App updateReady={updateReady} onUpdate={() => updateSW?.(true)} />
+        <Splash />
       </UIProvider>
     </LangProvider>
   );

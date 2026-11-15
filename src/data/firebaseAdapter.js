@@ -141,35 +141,6 @@ export function removeMember(uid) {
   return deleteDoc(doc(db, 'members', uid));
 }
 
-/** Malik ke liye: WhatsApp alert ki setting aur aakhri message ka haal */
-export function watchWhatsApp(cb, onError) {
-  init();
-  const state = { cfg: null, status: null };
-  const u1 = onSnapshot(doc(db, 'private', 'whatsapp'), (s) => { state.cfg = s.data() || {}; cb({ ...state }); }, (e) => onError?.(e));
-  const u2 = onSnapshot(doc(db, 'private', 'waStatus'), (s) => { state.status = s.data() || null; cb({ ...state }); }, (e) => onError?.(e));
-  return () => { u1(); u2(); };
-}
-
-export function saveWhatsApp(cfg) {
-  init();
-  return setDoc(doc(db, 'private', 'whatsapp'), cfg, { merge: true });
-}
-
-/** Test message: ek document banta hai, server ka function message bhej kar usme nateeja likhta hai */
-export function sendWaTest(onResult) {
-  init();
-  const ref = doc(collection(db, 'private', 'whatsapp', 'tests'));
-  setDoc(ref, { at: serverTimestamp() }).catch((e) => onResult({ ok: false, error: e.message }));
-  const unsub = onSnapshot(ref, (s) => {
-    const d = s.data();
-    if (d && d.doneAt !== undefined) {
-      unsub();
-      onResult(d);
-    }
-  }, (e) => onResult({ ok: false, error: e.message }));
-  return unsub;
-}
-
 /** role ke hisab se store. Labour ko kharche padhne ki permission nahi, isliye unhe load nahi karte. */
 export function createFirebaseStore(uid, role = 'owner') {
   init();

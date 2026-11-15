@@ -64,6 +64,25 @@ const DAYS = {
   hi: ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'],
 };
 
+const WEEKDAYS = {
+  hl: ['Ra', 'So', 'Ma', 'Bu', 'Gu', 'Shu', 'Sha'],
+  en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+  hi: ['र', 'सो', 'मं', 'बु', 'गु', 'शु', 'श'],
+};
+export const weekdayNames = () => WEEKDAYS[getLang()];
+
+/** Mahine ka calendar: 6 hafte x 7 din, har cell "YYYY-MM-DD" ya null (khaali) */
+export function monthGrid(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const first = new Date(y, m - 1, 1).getDay();
+  const days = new Date(y, m, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < first; i++) cells.push(null);
+  for (let d = 1; d <= days; d++) cells.push(`${ym}-${pad(d)}`);
+  while (cells.length % 7) cells.push(null);
+  return cells;
+}
+
 /** "15 Nov 2026" */
 export function fmtDate(iso) {
   if (!iso) return '';

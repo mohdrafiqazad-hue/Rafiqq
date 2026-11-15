@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['icon.svg', 'favicon-48.png', 'apple-touch-icon.png', 'fonts/*.ttf'],
+      includeAssets: ['favicon-48.png', 'apple-touch-icon.png', 'fonts/*.ttf'],
       manifest: {
         name: 'Madhur Ganga Minerals - Cooler Hisab',
         short_name: 'MGM Hisab',
@@ -17,7 +17,7 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#f2f5f7',
+        background_color: '#ffffff',
         theme_color: '#0d6688',
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },

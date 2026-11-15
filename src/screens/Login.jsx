@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useOnline } from '../data/DataContext.jsx';
 import { t } from '../i18n/index.js';
 import { LangPicker, useLang } from '../i18n/LangContext.jsx';
-import { COMPANY } from '../lib/reports.js';
 
 export default function Login({ onLogin, onDemo, configured }) {
   useLang(); // bhasha badalne par dobara render ho
@@ -19,8 +18,7 @@ export default function Login({ onLogin, onDemo, configured }) {
   return (
     <div className="login">
       <LangPicker />
-      <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" width="96" height="96" />
-      <h1>{COMPANY}</h1>
+      <img className="logo-img" src={`${import.meta.env.BASE_URL}pwa-512.png`} alt="Madhur Ganga Minerals" width="200" height="200" />
       <p className="muted">{t('app.tagline')}</p>
 
       {configured ? (

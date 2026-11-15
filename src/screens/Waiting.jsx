@@ -2,7 +2,6 @@
 import { t } from '../i18n/index.js';
 import { LangPicker, useLang } from '../i18n/LangContext.jsx';
 import { useOnline } from '../data/DataContext.jsx';
-import { COMPANY } from '../lib/reports.js';
 
 export default function Waiting({ user, role, onLogout }) {
   useLang();
@@ -11,8 +10,7 @@ export default function Waiting({ user, role, onLogout }) {
   return (
     <div className="login">
       <LangPicker />
-      <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" width="80" height="80" />
-      <h1>{COMPANY}</h1>
+      <img className="logo-img" src={`${import.meta.env.BASE_URL}pwa-512.png`} alt="Madhur Ganga Minerals" width="150" height="150" />
       <div className={`card waiting ${rejected ? 'waiting-no' : ''}`}>
         <div className="waiting-icon">{rejected ? '⛔' : '⏳'}</div>
         <h3>{rejected ? t('w.rejectedTitle') : t('w.title')}</h3>

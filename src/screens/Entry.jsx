@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../data/DataContext.jsx';
 import { useUI } from '../components/ui.jsx';
-import { DateBar, NumField } from '../components/common.jsx';
+import { DateBar, MonthCalendar, NumField } from '../components/common.jsx';
 import { balanceBefore, fmtRs, nextPendingLabour, parchi } from '../lib/calc.js';
 import { addDays, fmtDate } from '../lib/dates.js';
 import { t } from '../i18n/index.js';
@@ -15,6 +15,25 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
   const [form, setForm] = useState(EMPTY);
   const firstRef = useRef(null);
   const focusNext = useRef(false);
+
+  // Calendar: kis din sab ki entry hui (hara), kis din kuch baaki (narangi)
+  const [showCal, setShowCal] = useState(() => {
+    try { return localStorage.getItem('mgm-cal') !== '0'; } catch { return true; }
+  });
+  const toggleCal = () => {
+    setShowCal((v) => {
+      try { localStorage.setItem('mgm-cal', v ? '0' : '1'); } catch { /* ignore */ }
+      return !v;
+    });
+  };
+  const marks = useMemo(() => {
+    const activeIds = new Set(D.active.map((l) => l.id));
+    const count = new Map();
+    for (const e of D.entries) if (activeIds.has(e.l)) count.set(e.d, (count.get(e.d) || 0) + 1);
+    const m = new Map();
+    for (const [d, n] of count) m.set(d, n >= activeIds.size ? 'full' : 'part');
+    return m;
+  }, [D.entries, D.active]);
 
   const doneIds = useMemo(
     () => new Set(D.labours.filter((l) => D.getEntry(l.id, date)).map((l) => l.id)),
@@ -122,6 +141,9 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
   return (
     <div className="screen">
       <DateBar date={date} onChange={setDate} />
+      <button className="link-btn cal-toggle" onClick={toggleCal}>{showCal ? `▾ ${t('cal.hide')}` : t('cal.show')}</button>
+      {showCal && <MonthCalendar date={date} onPick={setDate} marks={marks} />}
+      {showCal && !D.can.editEntry && <p className="muted small note">{t('cal.note')}</p>}
 
       <div className="chips" role="listbox" aria-label={t('e.pickLabour')}>
         {chips.map((l) => (
