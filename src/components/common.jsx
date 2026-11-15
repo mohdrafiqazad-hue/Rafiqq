@@ -77,7 +77,7 @@ export function Segmented({ value, options, onChange, small }) {
 }
 
 /** Number wala input: phone par number keypad khulta hai */
-export function NumField({ label, value, onChange, decimal = false, allowNegative = false, inputRef, onEnter, hint }) {
+export function NumField({ label, value, onChange, decimal = false, allowNegative = false, inputRef, onEnter, hint, disabled = false }) {
   const neg = String(value).startsWith('-');
   const clean = (s) => {
     let v = s.replace(decimal ? /[^\d.]/g : /\D/g, '');
@@ -103,6 +103,7 @@ export function NumField({ label, value, onChange, decimal = false, allowNegativ
         )}
         <input
           ref={inputRef}
+          disabled={disabled}
           type="text"
           inputMode={decimal ? 'decimal' : 'numeric'}
           pattern={decimal ? '[0-9.]*' : '[0-9]*'}

@@ -20,8 +20,10 @@ function ExpenseForm({ initial, onClose }) {
   const [n, setN] = useState(initial?.n || '');
   const [err, setErr] = useState('');
   const cats = allCategories(D.xcats);
+  const readOnly = !!initial && !D.can.editKharcha; // purana kharcha: sirf malik badal sakta hai
 
   const save = () => {
+    if (readOnly) return;
     if (!isValidISO(d)) return setErr(t('x.errDate'));
     const amt = Number(a);
     if (!(amt > 0)) return setErr(t('x.errAmount'));
@@ -44,7 +46,8 @@ function ExpenseForm({ initial, onClose }) {
   };
 
   return (
-    <Sheet title={initial ? t('x.formEdit') : t('x.formNew')} onClose={onClose}>
+    <Sheet title={readOnly ? t('x.view') : initial ? t('x.formEdit') : t('x.formNew')} onClose={onClose}>
+      <fieldset className="plain-fieldset" disabled={readOnly}>
       <label className="field">
         <span>{t('x.date')}</span>
         <input type="date" value={d} onChange={(e) => setD(e.target.value)} />
@@ -68,11 +71,16 @@ function ExpenseForm({ initial, onClose }) {
         <span>{t('x.note')}</span>
         <input value={n} onChange={(e) => setN(e.target.value)} placeholder={t('x.notePh')} maxLength={120} />
       </label>
+      </fieldset>
       {err && <div className="error-box">{err}</div>}
-      <div className="row-actions">
-        {initial && <button className="btn btn-danger-outline" onClick={del}>{t('c.delete')}</button>}
-        <button className="btn btn-primary btn-big grow" onClick={save}>{t('c.save')}</button>
-      </div>
+      {readOnly ? (
+        <div className="lock-box">{t('pm.lockedX')}</div>
+      ) : (
+        <div className="row-actions">
+          {initial && <button className="btn btn-danger-outline" onClick={del}>{t('c.delete')}</button>}
+          <button className="btn btn-primary btn-big grow" onClick={save}>{t('c.save')}</button>
+        </div>
+      )}
     </Sheet>
   );
 }
@@ -151,7 +159,7 @@ export default function Kharcha() {
     <div className="screen">
       <div className="row-actions">
         <button className="btn btn-primary btn-big grow" onClick={() => setForm('new')}>{t('x.add')}</button>
-        <button className="btn btn-big" onClick={() => setCats(true)}>{t('x.manage')}</button>
+        {D.can.editKharcha && <button className="btn btn-big" onClick={() => setCats(true)}>{t('x.manage')}</button>}
       </div>
 
       <PeriodPicker period={period} setPeriod={setPeriod} />

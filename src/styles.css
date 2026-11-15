@@ -289,3 +289,20 @@ label.datebar-label .hidden-date { pointer-events: auto; }
 .field .chips { margin-top: 2px; }
 .field .chip { color: var(--text); }
 .field .chip.on { color: #fff; }
+
+/* ---------- Roles / team ---------- */
+.lock-box { background: #eef3f7; border: 1px solid #cfdbe5; color: #2c4a5e; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 600; }
+.numfield input:disabled { background: #f1f4f6; color: #3b4a56; opacity: 1; -webkit-text-fill-color: #3b4a56; }
+.plain-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.plain-fieldset:disabled .chip:not(.on) { opacity: .5; }
+.team-sub { font-weight: 700; margin: 12px 0 4px; font-size: 15px; }
+.member { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid #eef1f4; }
+.member-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.member-who b, .member-who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.member-btns { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.member-pending { background: #fff8ec; border-radius: 10px; padding: 10px; border: 1px solid #f3d3ad; margin-top: 6px; }
+.team-banner { background: #fff1e0; color: #8a4a00; }
+.waiting { text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; }
+.waiting p { margin: 0; }
+.waiting-icon { font-size: 44px; }
+.waiting-no { border-color: #f0b6b6; }

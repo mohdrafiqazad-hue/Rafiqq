@@ -22,14 +22,33 @@ export function useOnline() {
   return online;
 }
 
-function errMsg(err) {
-  if (err?.code === 'permission-denied') return t('msg.perm');
+/** Role ke hisab se kya-kya kar sakte hain (asli rok firestore.rules me hai, ye sirf UI ke liye) */
+export function permissions(role) {
+  const owner = role === 'owner';
+  const manager = owner || role === 'manager';
+  return {
+    owner,
+    addEntry: manager || role === 'labour',
+    editEntry: owner,
+    addLabour: manager,
+    editLabour: owner,
+    seeReports: manager,
+    seeKharcha: manager,
+    addKharcha: manager,
+    editKharcha: owner,
+    settings: owner,
+    team: owner,
+  };
+}
+
+function errMsg(err, role) {
+  if (err?.code === 'permission-denied') return role === 'owner' ? t('msg.perm') : t('pm.denied');
   if (err?.code === 'resource-exhausted') return t('msg.quota');
   if (err?.code === 'unavailable') return t('msg.offline');
   return err?.message || t('msg.unknown');
 }
 
-export function DataProvider({ store, user, onLogout, children }) {
+export function DataProvider({ store, user, role = 'owner', team = null, onLogout, children }) {
   const { toast } = useUI();
   const online = useOnline();
   const [data, setData] = useState(null);
@@ -41,18 +60,18 @@ export function DataProvider({ store, user, onLogout, children }) {
     return store.subscribe(
       (d) => setData(d),
       (s) => setPending(s.pending),
-      (err) => setLoadError(errMsg(err)),
+      (err) => setLoadError(errMsg(err, role)),
     );
   }, [store]);
 
   /** Write chalao; turant feedback do (offline ho to bhi data phone me save ho chuka hota hai) */
   const run = useCallback((promise, okMsg) => {
-    Promise.resolve(promise).catch((err) => toast(t('msg.saveFail', { e: errMsg(err) }), 'err', 6000));
+    Promise.resolve(promise).catch((err) => toast(t('msg.saveFail', { e: errMsg(err, role) }), 'err', 6000));
     if (okMsg) {
       if (store.kind === 'firebase' && !navigator.onLine) toast(t('msg.offline'), 'warn', 5000);
       else toast(okMsg, 'ok');
     }
-  }, [store, toast]);
+  }, [store, toast, role]);
 
   const value = useMemo(() => {
     if (!data) return null;
@@ -61,6 +80,9 @@ export function DataProvider({ store, user, onLogout, children }) {
     const entryIndex = new Map(data.entries.map((e) => [entryKey(e.l, e.d), e]));
     return {
       user,
+      role,
+      can: permissions(role),
+      team,
       storeKind: store.kind,
       online,
       pending,
@@ -97,7 +119,7 @@ export function DataProvider({ store, user, onLogout, children }) {
       },
       logout: onLogout,
     };
-  }, [data, store, user, online, pending, run, onLogout]);
+  }, [data, store, user, role, team, online, pending, run, onLogout]);
 
   if (loadError && !data) {
     return (

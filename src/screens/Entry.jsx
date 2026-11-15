@@ -65,8 +65,10 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
   const anyValue = ['t', 'r', 'p', 'm'].some((k) => form[k] !== '' && Number(form[k]) !== 0);
 
+  const locked = !!existing && !D.can.editEntry; // purani entry: sirf malik badal sakta hai
+
   const save = async () => {
-    if (!labour) return;
+    if (!labour || locked) return;
     if (!anyValue && !existing) {
       const ok = await confirm({
         title: t('e.emptyTitle'),
@@ -150,10 +152,10 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
           </div>
 
           <div className="grid2">
-            <NumField label={t('e.t')} value={form.t} onChange={set('t')} inputRef={firstRef} />
-            <NumField label={t('e.r')} value={form.r} onChange={set('r')} />
-            <NumField label={t('e.p')} value={form.p} onChange={set('p')} />
-            <NumField label={t('e.m')} value={form.m} onChange={set('m')} onEnter={save} />
+            <NumField label={t('e.t')} value={form.t} onChange={set('t')} inputRef={firstRef} disabled={locked} />
+            <NumField label={t('e.r')} value={form.r} onChange={set('r')} disabled={locked} />
+            <NumField label={t('e.p')} value={form.p} onChange={set('p')} disabled={locked} />
+            <NumField label={t('e.m')} value={form.m} onChange={set('m')} onEnter={save} disabled={locked} />
           </div>
 
           {P.tooManyReturned && (
@@ -178,7 +180,9 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
             )}
           </div>
 
-          {existing ? (
+          {locked ? (
+            <div className="lock-box">{t('pm.locked')}</div>
+          ) : existing ? (
             <div className="row-actions">
               <button className="btn btn-danger-outline" onClick={del}>{t('c.delete')}</button>
               <button className="btn btn-primary btn-big grow" onClick={save}>{t('c.update')}</button>

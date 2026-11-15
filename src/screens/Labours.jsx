@@ -85,7 +85,7 @@ export default function Labours({ khataId, setKhataId, showSettings, setShowSett
           {showArchived && archived.map((l) => (
             <div key={l.id} className="archived-row">
               <button className="link-btn" onClick={() => setKhataId(l.id)}>{l.name}</button>
-              <button
+              {D.can.editLabour && <button
                 className="btn btn-small"
                 onClick={async () => {
                   if (await confirm({ title: t('l.restoreTitle'), message: t('l.restoreMsg', { name: l.name }), okText: t('c.yes') })) {
@@ -94,7 +94,7 @@ export default function Labours({ khataId, setKhataId, showSettings, setShowSett
                 }}
               >
                 {t('l.restore')}
-              </button>
+              </button>}
             </div>
           ))}
         </>

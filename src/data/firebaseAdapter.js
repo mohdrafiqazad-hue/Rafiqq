@@ -1,8 +1,11 @@
 // Firebase (Google login + Firestore) wala data store.
-// Data ka dhaancha:
-//   users/{uid}/meta/settings      -> { rate }
-//   users/{uid}/labours/{labourId} -> { name, phone, archived, o, ob? }
-//   users/{uid}/months/{YYYY-MM}   -> { e: { "<labourId>_<date>": { l, d, t, r, p, m, k } } }
+// Poori company ka ek saanjha data (malik, manager, labour sab isi ko use karte hain):
+//   members/{uid}                    -> { email, name, role, ... } (kaun login kar sakta hai)
+//   biz/main/meta/settings           -> { rate, xcats }
+//   biz/main/labours/{labourId}      -> { name, phone, archived, o, ob? }
+//   biz/main/months/{YYYY-MM}        -> { e: { "<labourId>_<date>": { l, d, t, r, p, m, k } } }
+//   biz/main/xmonths/{YYYY-MM}       -> { x: { "<id>": kharcha } }
+// Kaun kya kar sakta hai, ye firestore.rules me tay hai.
 // Ek mahine ki saari entries ek document me rehti hain, taaki app kholne par kam "reads" lagein
 // aur Firebase ka free plan saalon tak chale.
 
@@ -14,6 +17,7 @@ import {
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
   collection, doc, onSnapshot, setDoc, updateDoc, deleteField, FieldPath, writeBatch, connectFirestoreEmulator,
+  serverTimestamp, deleteDoc,
 } from 'firebase/firestore';
 import { firebaseConfig, useEmulator } from '../firebase-config.js';
 import { entryKey } from '../lib/calc.js';
@@ -84,9 +88,64 @@ export function logout() {
   return signOut(auth);
 }
 
-export function createFirebaseStore(uid) {
+export const BIZ = 'biz/main';
+
+/**
+ * Apni membership dekho. Pehli baar login par "pending" request apne aap ban jaati hai.
+ * cb({ role, ...member }) | cb({ role: 'none' }) jab request ban rahi ho
+ */
+export function watchMember(user, cb, onError) {
   init();
-  const base = `users/${uid}`;
+  const ref = doc(db, 'members', user.uid);
+  let requested = false;
+  return onSnapshot(ref, { includeMetadataChanges: true }, (snap) => {
+    if (snap.exists()) {
+      cb({ uid: user.uid, ...snap.data() });
+      return;
+    }
+    // Phone ke cache me nahi mila: server se pakka pata chalne tak request mat banao
+    // (warna kisi purane member ki membership galti se "pending" ho sakti hai)
+    if (snap.metadata.fromCache) {
+      cb({ uid: user.uid, role: navigator.onLine ? 'loading' : 'offline-unknown' });
+      return;
+    }
+    cb({ uid: user.uid, role: 'none' });
+    if (!requested) {
+      requested = true;
+      setDoc(ref, {
+        email: user.email || '',
+        name: user.name || '',
+        photo: user.photo || '',
+        role: 'pending',
+        requestedAt: serverTimestamp(),
+      }).catch((err) => onError?.(err));
+    }
+  }, (err) => onError?.(err));
+}
+
+/** Malik ke liye: sab members (requests bhi) */
+export function watchMembers(cb, onError) {
+  init();
+  return onSnapshot(collection(db, 'members'), (snap) => {
+    cb(snap.docs.map((d) => ({ uid: d.id, ...d.data() })));
+  }, (err) => onError?.(err));
+}
+
+export function setMemberRole(uid, role) {
+  init();
+  return updateDoc(doc(db, 'members', uid), { role, decidedAt: serverTimestamp() });
+}
+
+export function removeMember(uid) {
+  init();
+  return deleteDoc(doc(db, 'members', uid));
+}
+
+/** role ke hisab se store. Labour ko kharche padhne ki permission nahi, isliye unhe load nahi karte. */
+export function createFirebaseStore(uid, role = 'owner') {
+  init();
+  const base = BIZ;
+  const canSeeExpenses = role === 'owner' || role === 'manager';
   const laboursCol = collection(db, `${base}/labours`);
   const monthsCol = collection(db, `${base}/months`);
   const xmonthsCol = collection(db, `${base}/xmonths`); // kharche, mahine ke hisab se
@@ -130,12 +189,17 @@ export function createFirebaseStore(uid) {
         emit();
       }, fail);
 
-      const u4 = onSnapshot(xmonthsCol, opts, (snap) => {
-        state.expenses = snap.docs.flatMap((d) => Object.values(d.data().x || {}));
+      let u4 = () => {};
+      if (canSeeExpenses) {
+        u4 = onSnapshot(xmonthsCol, opts, (snap) => {
+          state.expenses = snap.docs.flatMap((d) => Object.values(d.data().x || {}));
+          state.loaded.x = true;
+          pending.x = snap.metadata.hasPendingWrites;
+          emit();
+        }, fail);
+      } else {
         state.loaded.x = true;
-        pending.x = snap.metadata.hasPendingWrites;
-        emit();
-      }, fail);
+      }
 
       return () => { u1(); u2(); u3(); u4(); };
     },

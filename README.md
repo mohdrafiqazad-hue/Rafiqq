@@ -15,6 +15,19 @@ Water cooler business ka roz ka hisab rakhne wala mobile app (PWA). Ye phone par
 
 **Bhasha:** Login screen par ya Settings me Hinglish, English ya हिंदी chunein. Poora app, WhatsApp message aur PDF/Word/Excel reports usi bhasha me bante hain. Ye choice har phone par alag yaad rehti hai.
 
+### Kaun kya kar sakta hai (login aur permission)
+Saare log ek hi company ka data dekhte hain. Koi bhi Google se login kar sakta hai, lekin **malik ki approval ke bina kuch nahi dikhta**.
+
+| Role | Kya kar sakta hai |
+|---|---|
+| **Malik** | Sab kuch: entry/kharcha/labour badalna aur delete, rate, backup restore, logon ko approve/hatana |
+| **Manager** | Sab dekh sakta hai; **nayi** entry, naya labour, naya kharcha save kar sakta hai. Badal/delete nahi. |
+| **Labour** | Sirf Entry screen: **nayi** entry save kar sakta hai. Kharcha, reports, labour list nahi. |
+| **Naya user** | "Malik ki approval ka intezaar" screen. Malik **Labour → ⚙️ Settings → Team** me Manager/Labour banata hai ya Mana karta hai. |
+
+Ye rok sirf app ke buttons me nahi, **Firebase server ke rules (`firestore.rules`) me bhi hai**, isliye koi chalaaki se bhi purani entry nahi badal sakta.
+Malik ka account Firestore me `members/{uid}` (role `owner`) se tay hota hai.
+
 ### Hisab ke formula
 - Paisa bane = Lage × Rate (us din ka rate entry ke saath save hota hai; rate badalne se purani entry nahi badalti)
 - Cooler baaki = Pichla (opening) cooler + Σ(Le gaye − Wapis aaye)
@@ -64,7 +77,7 @@ npm run deploy
 
 ## Developer notes
 - React + Vite, `vite-plugin-pwa` (offline cache), Firebase Auth (Google) + Firestore (offline persistence).
-- Data: `users/{uid}/labours/{id}`, `users/{uid}/meta/settings` (rate, apni kharcha category `xcats`), `users/{uid}/months/{YYYY-MM}` (entries), `users/{uid}/xmonths/{YYYY-MM}` (kharche). Ek mahine ki saari entries ek document me map ki tarah rehti hain, taaki reads kam lagein aur free plan me aaraam se chale.
+- Data (poori company ka saanjha): `members/{uid}` (role), `biz/main/labours/{id}`, `biz/main/meta/settings` (rate, `xcats`), `biz/main/months/{YYYY-MM}` (entries), `biz/main/xmonths/{YYYY-MM}` (kharche). Purane version ka `users/{uid}/...` data sirf padhne ke liye rakha hai. Ek mahine ki saari entries ek document me map ki tarah rehti hain, taaki reads kam lagein aur free plan me aaraam se chale.
 - `npm test`: hisab, kharcha, backup/import, report files (PDF/Word/Excel) aur teeno bhasha ke unit tests.
 - Bhasha ke saare words `src/i18n/strings.js` me hain: `[Hinglish, English, हिंदी]`.
 - `npm run dev`, phir `/?demo=1` kholein: bina Firebase ke demo mode (data browser me).

@@ -1,12 +1,88 @@
 rules_version = '2';
 
-// Har user sirf apna data padh/likh sakta hai: users/{uid}/...
+// Madhur Ganga Minerals: ek company ka saanjha data, role ke hisab se permission.
+//
+//   members/{uid}        -> { email, name, role: 'pending' | 'owner' | 'manager' | 'labour' | 'rejected', ... }
+//   biz/main/labours/{id}
+//   biz/main/months/{YYYY-MM}   -> { e: { "<labourId>_<date>": entry } }
+//   biz/main/xmonths/{YYYY-MM}  -> { x: { "<id>": kharcha } }
+//   biz/main/meta/settings      -> { rate, xcats }
+//
+// Malik (owner): sab kuch.
+// Manager: sab padh sake; nayi entry, naya labour, naya kharcha jod sake. Badal/delete nahi.
+// Labour: entry screen ke liye labour list aur entries padh sake; sirf nayi entry jod sake.
+// Naya user: sirf apni "approval request" bana sake (role = pending). Role sirf malik badal sakta hai.
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+    function signedIn() {
+      return request.auth != null;
     }
-    // Baaki sab band
+    function memberPath() {
+      return /databases/$(database)/documents/members/$(request.auth.uid);
+    }
+    function role() {
+      return signedIn() && exists(memberPath()) ? get(memberPath()).data.role : 'none';
+    }
+    function isOwner() {
+      return role() == 'owner';
+    }
+    function isManager() {
+      return role() in ['owner', 'manager'];
+    }
+    function isWorker() {
+      return role() in ['owner', 'manager', 'labour'];
+    }
+    // Map field "f" me sirf NAYI keys judi hain; purani koi entry badli ya hati nahi, baaki document same
+    function onlyAdds(f) {
+      let top = request.resource.data.diff(resource.data);
+      let inner = request.resource.data[f].diff(resource.data.get(f, {}));
+      return top.affectedKeys().hasOnly([f])
+        && inner.changedKeys().size() == 0
+        && inner.removedKeys().size() == 0;
+    }
+
+    match /members/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isOwner());
+      // Koi bhi Google user sirf apni request bana sakta hai, woh bhi "pending" ke saath
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.role == 'pending'
+        && request.resource.data.email == request.auth.token.email;
+      allow update, delete: if isOwner();
+    }
+
+    match /biz/main/labours/{id} {
+      allow read: if isWorker();
+      allow create: if isManager();
+      allow update, delete: if isOwner();
+    }
+
+    match /biz/main/months/{ym} {
+      allow read: if isWorker();
+      allow create: if isWorker();
+      allow update: if isOwner() || (isWorker() && onlyAdds('e'));
+      allow delete: if isOwner();
+    }
+
+    match /biz/main/xmonths/{ym} {
+      allow read: if isManager();
+      allow create: if isManager();
+      allow update: if isOwner() || (isManager() && onlyAdds('x'));
+      allow delete: if isOwner();
+    }
+
+    match /biz/main/meta/{doc} {
+      allow read: if isWorker();
+      allow write: if isOwner();
+    }
+
+    // Purana (pehle version ka) har-user wala data: sirf padhne ke liye
+    match /users/{uid}/{document=**} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

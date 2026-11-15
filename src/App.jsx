@@ -11,12 +11,18 @@ import Report from './screens/Report.jsx';
 import Labours from './screens/Labours.jsx';
 import Login from './screens/Login.jsx';
 import Kharcha from './screens/Kharcha.jsx';
+import Settings from './screens/Settings.jsx';
+import Waiting from './screens/Waiting.jsx';
 import { TabIcon } from './components/Icons.jsx';
 import { t } from './i18n/index.js';
 import { useLang } from './i18n/LangContext.jsx';
 import { COMPANY } from './lib/reports.js';
 
-const TABS = ['entry', 'roz', 'mahina', 'kharcha', 'report', 'labour'];
+// Role ke hisab se tabs: labour ko sirf Entry aur Settings
+const TABS_ALL = ['entry', 'roz', 'mahina', 'kharcha', 'report', 'labour'];
+const TABS_LABOUR = ['entry', 'settings'];
+
+const ACTIVE_ROLES = ['owner', 'manager', 'labour'];
 
 const MODE_KEY = 'mgm-mode';
 const getMode = () => {
@@ -41,6 +47,14 @@ function StatusPill() {
   return <span className="pill pill-green">{t('st.synced')}</span>;
 }
 
+/** Malik ko: kitne log approval ka intezaar kar rahe hain */
+function TeamBanner({ onOpen }) {
+  const D = useData();
+  const n = D.team ? D.team.members.filter((m) => m.role === 'pending').length : 0;
+  if (!n) return null;
+  return <button className="update-banner team-banner" onClick={onOpen}>{t('tm.banner', { n })}</button>;
+}
+
 function OfflineBanner() {
   const D = useData();
   if (D.storeKind !== 'firebase' || D.online) return null;
@@ -60,6 +74,9 @@ function MainShell(props) {
 }
 
 function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, setLabourId, khataId, setKhataId, settingsOpen, setSettingsOpen }) {
+  const D = useData();
+  const tabs = D.can.seeReports ? TABS_ALL : TABS_LABOUR;
+  const current = tabs.includes(tab) ? tab : 'entry';
   const goTab = (k) => {
     setTab(k);
     setKhataId(null);
@@ -70,6 +87,10 @@ function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, set
     setLabourId(id);
     goTab('entry');
   };
+  const openTeam = () => {
+    goTab('labour');
+    setSettingsOpen(true);
+  };
 
   return (
     <div className="app">
@@ -78,26 +99,28 @@ function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, set
           <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" width="28" height="28" />
           <div>
             <div className="brand-name">{COMPANY}</div>
-            <div className="brand-sub">{t('app.sub')}</div>
+            <div className="brand-sub">{t('app.sub')}{D.storeKind === 'firebase' ? ` · ${t(`role.${D.role}`)}` : ''}</div>
           </div>
         </div>
         <StatusPill />
       </header>
       <OfflineBanner />
+      <TeamBanner onOpen={openTeam} />
       {updateReady && (
         <button className="update-banner" onClick={onUpdate}>{t('banner.update')}</button>
       )}
       <main>
-        {tab === 'entry' && <Entry date={date} setDate={setDate} labourId={labourId} setLabourId={setLabourId} goTab={goTab} />}
-        {tab === 'roz' && <Roz date={date} setDate={setDate} openEntry={openEntry} />}
-        {tab === 'mahina' && <Mahina />}
-        {tab === 'kharcha' && <Kharcha />}
-        {tab === 'report' && <Report date={date} setDate={setDate} />}
-        {tab === 'labour' && <Labours khataId={khataId} setKhataId={setKhataId} showSettings={settingsOpen} setShowSettings={setSettingsOpen} />}
+        {current === 'entry' && <Entry date={date} setDate={setDate} labourId={labourId} setLabourId={setLabourId} goTab={goTab} />}
+        {current === 'roz' && <Roz date={date} setDate={setDate} openEntry={openEntry} />}
+        {current === 'mahina' && <Mahina />}
+        {current === 'kharcha' && <Kharcha />}
+        {current === 'report' && <Report date={date} setDate={setDate} />}
+        {current === 'labour' && <Labours khataId={khataId} setKhataId={setKhataId} showSettings={settingsOpen} setShowSettings={setSettingsOpen} />}
+        {current === 'settings' && <Settings />}
       </main>
       <nav className="tabbar">
-        {TABS.map((k) => (
-          <button key={k} className={tab === k ? 'on' : ''} onClick={() => goTab(k)} aria-current={tab === k ? 'page' : undefined}>
+        {tabs.map((k) => (
+          <button key={k} className={current === k ? 'on' : ''} onClick={() => goTab(k)} aria-current={current === k ? 'page' : undefined}>
             <TabIcon name={k} />
             <span>{t(`tab.${k}`)}</span>
           </button>
@@ -109,10 +132,13 @@ function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, set
 
 export default function App({ updateReady, onUpdate }) {
   const { toast } = useUI();
+  useLang();
   const demoParam = typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo');
   const [mode, setModeState] = useState(() => (getMode() === 'demo' || demoParam ? 'demo' : 'cloud'));
   const [user, setUser] = useState(undefined); // undefined = pata nahi abhi
   const [fb, setFb] = useState(null);
+  const [member, setMember] = useState(null); // { role, ... }
+  const [members, setMembers] = useState([]);
 
   // Firebase sirf tab load ho jab zaroorat ho
   useEffect(() => {
@@ -136,11 +162,42 @@ export default function App({ updateReady, onUpdate }) {
     };
   }, [mode, toast]);
 
+  // Login ke baad: kya ye user approved hai? (malik / manager / labour / intezaar)
+  useEffect(() => {
+    setMember(null);
+    if (!fb || !user) return undefined;
+    return fb.watchMember(user, setMember, (err) => toast(err?.message || String(err), 'err', 6000));
+  }, [fb, user, toast]);
+
+  // Malik ko team ki list (nayi requests) chahiye
+  const isOwner = member?.role === 'owner';
+  useEffect(() => {
+    setMembers([]);
+    if (!fb || !isOwner) return undefined;
+    return fb.watchMembers(setMembers);
+  }, [fb, isOwner]);
+
+  const role = mode === 'demo' ? 'owner' : member?.role;
+  const active = ACTIVE_ROLES.includes(role);
+
   const store = useMemo(() => {
     if (mode === 'demo') return createLocalStore();
-    if (fb && user) return fb.createFirebaseStore(user.uid);
+    if (fb && user && active) return fb.createFirebaseStore(user.uid, role);
     return null;
-  }, [mode, fb, user]);
+  }, [mode, fb, user, active, role]);
+
+  const team = useMemo(() => {
+    if (!fb || !isOwner) return null;
+    return {
+      members,
+      setRole: (m, r) => fb.setMemberRole(m.uid, r)
+        .then(() => toast(r === 'rejected' ? t('tm.rejectedMsg', { name: m.name || m.email }) : t('tm.done', { name: m.name || m.email, role: t(`role.${r}`) })))
+        .catch((err) => toast(err?.message || String(err), 'err', 6000)),
+      remove: (m) => fb.removeMember(m.uid)
+        .then(() => toast(t('tm.removed', { name: m.name || m.email })))
+        .catch((err) => toast(err?.message || String(err), 'err', 6000)),
+    };
+  }, [fb, isOwner, members, toast]);
 
   const startDemo = () => {
     setMode('demo');
@@ -167,13 +224,18 @@ export default function App({ updateReady, onUpdate }) {
     }
   };
 
-  if (mode === 'cloud' && user === undefined) {
-    return <div className="center-screen"><div className="spinner" /><p>{t('loading.app')}</p></div>;
+  const spinner = (msg) => <div className="center-screen"><div className="spinner" /><p>{msg}</p></div>;
+
+  if (mode === 'cloud' && user === undefined) return spinner(t('loading.app'));
+  if (mode === 'cloud' && !user) return <Login onLogin={login} onDemo={startDemo} configured={isFirebaseConfigured} />;
+  if (mode === 'cloud' && !active) {
+    if (!member || member.role === 'loading' || member.role === 'none') return spinner(t('w.checking'));
+    return <Waiting user={user} role={member.role} onLogout={logout} />;
   }
   if (!store) return <Login onLogin={login} onDemo={startDemo} configured={isFirebaseConfigured} />;
 
   return (
-    <DataProvider key={mode + (user?.uid || '')} store={store} user={user} onLogout={logout}>
+    <DataProvider key={mode + (user?.uid || '') + role} store={store} user={user} role={role} team={team} onLogout={logout}>
       <MainShell updateReady={updateReady} onUpdate={onUpdate} />
     </DataProvider>
   );

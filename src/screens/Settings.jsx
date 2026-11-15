@@ -9,6 +9,69 @@ import { downloadFile } from '../export/index.js';
 import { t } from '../i18n/index.js';
 import { LangPicker } from '../i18n/LangContext.jsx';
 
+function Team() {
+  const D = useData();
+  const { confirm } = useUI();
+  const team = D.team;
+  if (!team) return null;
+  const me = D.user?.uid;
+  const pending = team.members.filter((m) => m.role === 'pending');
+  const others = team.members.filter((m) => m.role !== 'pending' && m.uid !== me);
+  const who = (m) => (
+    <div className="member-who">
+      <b>{m.name || m.email}</b>
+      <span className="muted small">{m.email}</span>
+    </div>
+  );
+  return (
+    <div className="card" id="team">
+      <div className="card-title">{t('tm.title')}</div>
+      <p className="muted small">{t('tm.help')}</p>
+      {pending.length > 0 && (
+        <>
+          <div className="team-sub">{t('tm.requests', { n: pending.length })}</div>
+          {pending.map((m) => (
+            <div key={m.uid} className="member member-pending">
+              {who(m)}
+              <div className="member-btns">
+                <button className="btn btn-small btn-primary" onClick={() => team.setRole(m, 'manager')}>{t('tm.asManager')}</button>
+                <button className="btn btn-small btn-primary" onClick={() => team.setRole(m, 'labour')}>{t('tm.asLabour')}</button>
+                <button className="btn btn-small btn-danger-outline" onClick={() => team.setRole(m, 'rejected')}>{t('tm.reject')}</button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+      <div className="team-sub">{t('tm.members')}</div>
+      <div className="member">
+        <div className="member-who"><b>{D.user?.name || D.user?.email} {t('tm.you')}</b><span className="muted small">{D.user?.email}</span></div>
+        <span className="pill pill-blue">{t('role.owner')}</span>
+      </div>
+      {!others.length && <p className="muted small">{t('tm.none')}</p>}
+      {others.map((m) => (
+        <div key={m.uid} className="member">
+          {who(m)}
+          <span className={`pill ${m.role === 'rejected' ? 'pill-orange' : 'pill-green'}`}>{t(`role.${m.role}`)}</span>
+          {m.role !== 'owner' && (
+            <div className="member-btns">
+              {m.role !== 'manager' && <button className="btn btn-small" onClick={() => team.setRole(m, 'manager')}>{t('tm.makeManager')}</button>}
+              {m.role !== 'labour' && <button className="btn btn-small" onClick={() => team.setRole(m, 'labour')}>{t('tm.makeLabour')}</button>}
+              <button
+                className="btn btn-small btn-danger-outline"
+                onClick={async () => {
+                  if (await confirm({ title: t('tm.removeTitle', { name: m.name || m.email }), message: t('tm.removeMsg'), okText: t('tm.remove'), danger: true })) team.remove(m);
+                }}
+              >
+                {t('tm.remove')}
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Settings({ onBack }) {
   const D = useData();
   const { toast, confirm } = useUI();
@@ -61,9 +124,11 @@ export default function Settings({ onBack }) {
   return (
     <div className="screen">
       <div className="subhead">
-        <button className="btn btn-small" onClick={onBack}>{t('c.back')}</button>
+        {onBack && <button className="btn btn-small" onClick={onBack}>{t('c.back')}</button>}
         <div className="subhead-title">{t('s.title')}</div>
       </div>
+
+      <Team />
 
       <div className="card">
         <div className="card-title">{t('s.lang')}</div>
@@ -72,20 +137,28 @@ export default function Settings({ onBack }) {
 
       <div className="card">
         <div className="card-title">{t('s.rate')}</div>
-        <div className="rate-row">
-          <NumField label={t('s.rateNow', { r: fmtRs(D.rate) })} value={rate} onChange={setRate} decimal onEnter={saveRate} />
-          <button className="btn btn-primary" onClick={saveRate}>{t('s.save')}</button>
-        </div>
-        <p className="muted small">{t('s.rateHelp')}</p>
+        {D.can.settings ? (
+          <>
+            <div className="rate-row">
+              <NumField label={t('s.rateNow', { r: fmtRs(D.rate) })} value={rate} onChange={setRate} decimal onEnter={saveRate} />
+              <button className="btn btn-primary" onClick={saveRate}>{t('s.save')}</button>
+            </div>
+            <p className="muted small">{t('s.rateHelp')}</p>
+          </>
+        ) : (
+          <p>{t('s.rateNow', { r: fmtRs(D.rate) })} <span className="muted small">· {t('pm.ownerOnly')}</span></p>
+        )}
       </div>
 
-      <div className="card">
-        <div className="card-title">{t('s.backup')}</div>
-        <button className="btn full" onClick={backup}>{t('s.backupDl')}</button>
-        <button className="btn full" onClick={() => fileRef.current?.click()}>{t('s.backupUp')}</button>
-        <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={pickFile} />
-        <p className="muted small">{t('s.backupHelp')}</p>
-      </div>
+      {D.can.seeReports && (
+        <div className="card">
+          <div className="card-title">{t('s.backup')}</div>
+          <button className="btn full" onClick={backup}>{t('s.backupDl')}</button>
+          {D.can.settings && <button className="btn full" onClick={() => fileRef.current?.click()}>{t('s.backupUp')}</button>}
+          <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={pickFile} />
+          <p className="muted small">{t('s.backupHelp')}</p>
+        </div>
+      )}
 
       <div className="card">
         <div className="card-title">{t('s.account')}</div>
@@ -93,6 +166,7 @@ export default function Settings({ onBack }) {
           <p className="warn-box">{t('s.demo')}</p>
         ) : (
           <p className="small">{t('s.login')}: <b>{D.user?.email}</b><br />
+            {t('pm.role', { role: t(`role.${D.role}`) })}<br />
             <span className="muted">{D.online ? (D.pending ? t('s.syncing') : t('s.synced')) : t('s.offline')}</span>
           </p>
         )}

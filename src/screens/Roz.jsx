@@ -68,7 +68,7 @@ export default function Roz({ date, setDate, openEntry }) {
           <div className="lrow-foot">
             <span>{t('r.kulBaaki')} <b>{r.c} {t('c.cooler')}</b> · <b className={r.baaki < 0 ? 'neg' : ''}>{fmtRs(r.baaki)}</b></span>
             <span className="lrow-btns">
-              <button className="btn btn-small" onClick={() => openEntry(r.labour.id)}>{r.entry ? t('r.edit') : t('r.add')}</button>
+              <button className="btn btn-small" onClick={() => openEntry(r.labour.id)}>{r.entry ? (D.can.editEntry ? t('r.edit') : t('pm.view')) : t('r.add')}</button>
               <button className="btn btn-small btn-wa" onClick={() => openWhatsApp(r.labour.phone, parchiText(r, date))} aria-label={t('r.sendParchi', { name: r.labour.name })}>
                 {t('r.parchi')}
               </button>

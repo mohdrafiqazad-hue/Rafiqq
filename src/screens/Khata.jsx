@@ -98,7 +98,7 @@ export default function Khata({ labour, onBack }) {
         {labour.ob && (
           <div className="muted small">{t('l.obInfo', { date: fmtDate(labour.ob.d), c: labour.ob.c, m: fmtRs(labour.ob.m) })}</div>
         )}
-        <div className="btn-wrap">
+        {D.can.editLabour && <div className="btn-wrap">
           <button className="btn btn-small" onClick={() => setEditing(true)}>{t('l.editBtn')}</button>
           <button className="btn btn-small" onClick={() => setOpening(true)}>{t('l.obBtn')}</button>
           {labour.archived ? (
@@ -106,7 +106,7 @@ export default function Khata({ labour, onBack }) {
           ) : (
             <button className="btn btn-small btn-danger-outline" onClick={archive}>{t('l.archiveBtn')}</button>
           )}
-        </div>
+        </div>}
       </div>
 
       <PeriodPicker period={period} setPeriod={setPeriod} />
