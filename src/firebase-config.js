@@ -4,12 +4,12 @@
 // Data ki suraksha firestore.rules se hoti hai.
 
 export const firebaseConfig = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: 'AIzaSyBopLqtGEwMlGWscGsprPrHzWtg6-UgOw0',
+  authDomain: 'madhur-ganga-minerals.firebaseapp.com',
+  projectId: 'madhur-ganga-minerals',
+  storageBucket: 'madhur-ganga-minerals.firebasestorage.app',
+  messagingSenderId: '477721142340',
+  appId: '1:477721142340:web:21725d985b08d53d818811',
 };
 
 // Sirf testing ke liye: VITE_EMULATOR=1 ho to local Firebase emulator use hota hai
