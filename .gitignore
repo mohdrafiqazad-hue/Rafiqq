@@ -33,3 +33,8 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Remotion reel project
+bail-reel/node_modules/
+bail-reel/out/
+bail-reel/build/
