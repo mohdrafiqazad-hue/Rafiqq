@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.web.madhur_ganga_minerals.twa",
+    "sha256_cert_fingerprints": ["DF:34:3E:90:B7:74:4A:98:05:A2:6E:44:AD:3E:65:2F:DF:8D:8B:C8:31:F7:2F:BC:7D:47:ED:4D:CB:C2:11:42"]
+  }
+}]
