@@ -10,15 +10,13 @@ import Mahina from './screens/Mahina.jsx';
 import Report from './screens/Report.jsx';
 import Labours from './screens/Labours.jsx';
 import Login from './screens/Login.jsx';
+import Kharcha from './screens/Kharcha.jsx';
 import { TabIcon } from './components/Icons.jsx';
+import { t } from './i18n/index.js';
+import { useLang } from './i18n/LangContext.jsx';
+import { COMPANY } from './lib/reports.js';
 
-const TABS = [
-  ['entry', 'Entry'],
-  ['roz', 'Roz'],
-  ['mahina', 'Mahina'],
-  ['report', 'Report'],
-  ['labour', 'Labour'],
-];
+const TABS = ['entry', 'roz', 'mahina', 'kharcha', 'report', 'labour'];
 
 const MODE_KEY = 'mgm-mode';
 const getMode = () => {
@@ -37,27 +35,35 @@ const setMode = (m) => {
 
 function StatusPill() {
   const D = useData();
-  if (D.storeKind === 'local') return <span className="pill pill-orange">Demo</span>;
-  if (!D.online) return <span className="pill pill-orange" title="Data phone me save hai">● Offline</span>;
-  if (D.pending) return <span className="pill pill-blue">⟳ Sync…</span>;
-  return <span className="pill pill-green">✓ Sync</span>;
+  if (D.storeKind === 'local') return <span className="pill pill-orange">{t('st.demo')}</span>;
+  if (!D.online) return <span className="pill pill-orange" title={t('st.offlineTitle')}>{t('st.offline')}</span>;
+  if (D.pending) return <span className="pill pill-blue">{t('st.syncing')}</span>;
+  return <span className="pill pill-green">{t('st.synced')}</span>;
 }
 
 function OfflineBanner() {
   const D = useData();
   if (D.storeKind !== 'firebase' || D.online) return null;
-  return <div className="offline-banner">Internet nahi hai. Entry phone me save hogi, net aate hi sync ho jayegi.</div>;
+  return <div className="offline-banner">{t('banner.offline')}</div>;
 }
 
-function Main({ updateReady, onUpdate }) {
+/** Tab/date ki state yahan rehti hai, taaki bhasha badalne par bhi wahi screen khuli rahe */
+function MainShell(props) {
+  const { lang } = useLang();
   const [tab, setTab] = useState('entry');
   const [date, setDate] = useState(today());
   const [labourId, setLabourId] = useState(null);
   const [khataId, setKhataId] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const state = { tab, setTab, date, setDate, labourId, setLabourId, khataId, setKhataId, settingsOpen, setSettingsOpen };
+  return <Main key={lang} {...props} {...state} />;
+}
 
-  const goTab = (t) => {
-    setTab(t);
+function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, setLabourId, khataId, setKhataId, settingsOpen, setSettingsOpen }) {
+  const goTab = (k) => {
+    setTab(k);
     setKhataId(null);
+    setSettingsOpen(false);
     window.scrollTo(0, 0);
   };
   const openEntry = (id) => {
@@ -71,28 +77,29 @@ function Main({ updateReady, onUpdate }) {
         <div className="brand">
           <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" width="28" height="28" />
           <div>
-            <div className="brand-name">Madhur Ganga Minerals</div>
-            <div className="brand-sub">Cooler Hisab</div>
+            <div className="brand-name">{COMPANY}</div>
+            <div className="brand-sub">{t('app.sub')}</div>
           </div>
         </div>
         <StatusPill />
       </header>
       <OfflineBanner />
       {updateReady && (
-        <button className="update-banner" onClick={onUpdate}>App ka naya version aaya hai. Yahan dabakar update karein.</button>
+        <button className="update-banner" onClick={onUpdate}>{t('banner.update')}</button>
       )}
       <main>
         {tab === 'entry' && <Entry date={date} setDate={setDate} labourId={labourId} setLabourId={setLabourId} goTab={goTab} />}
         {tab === 'roz' && <Roz date={date} setDate={setDate} openEntry={openEntry} />}
         {tab === 'mahina' && <Mahina />}
+        {tab === 'kharcha' && <Kharcha />}
         {tab === 'report' && <Report date={date} setDate={setDate} />}
-        {tab === 'labour' && <Labours khataId={khataId} setKhataId={setKhataId} />}
+        {tab === 'labour' && <Labours khataId={khataId} setKhataId={setKhataId} showSettings={settingsOpen} setShowSettings={setSettingsOpen} />}
       </main>
       <nav className="tabbar">
-        {TABS.map(([k, label]) => (
+        {TABS.map((k) => (
           <button key={k} className={tab === k ? 'on' : ''} onClick={() => goTab(k)} aria-current={tab === k ? 'page' : undefined}>
             <TabIcon name={k} />
-            <span>{label}</span>
+            <span>{t(`tab.${k}`)}</span>
           </button>
         ))}
       </nav>
@@ -120,7 +127,7 @@ export default function App({ updateReady, onUpdate }) {
       setFb(mod);
       unsub = mod.watchAuth((u) => setUser(u));
     }).catch(() => {
-      toast('App load nahi hua. Internet chalu karke dobara kholein.', 'err', 6000);
+      toast(t('err.appLoad'), 'err', 6000);
       setUser(null);
     });
     return () => {
@@ -161,13 +168,13 @@ export default function App({ updateReady, onUpdate }) {
   };
 
   if (mode === 'cloud' && user === undefined) {
-    return <div className="center-screen"><div className="spinner" /><p>Khul raha hai…</p></div>;
+    return <div className="center-screen"><div className="spinner" /><p>{t('loading.app')}</p></div>;
   }
   if (!store) return <Login onLogin={login} onDemo={startDemo} configured={isFirebaseConfigured} />;
 
   return (
     <DataProvider key={mode + (user?.uid || '')} store={store} user={user} onLogout={logout}>
-      <Main updateReady={updateReady} onUpdate={onUpdate} />
+      <MainShell updateReady={updateReady} onUpdate={onUpdate} />
     </DataProvider>
   );
 }

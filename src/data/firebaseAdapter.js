@@ -18,6 +18,7 @@ import {
 import { firebaseConfig, useEmulator } from '../firebase-config.js';
 import { entryKey } from '../lib/calc.js';
 import { monthKey } from '../lib/dates.js';
+import { t } from '../i18n/index.js';
 
 let app;
 let auth;
@@ -43,18 +44,18 @@ function init() {
 }
 
 const AUTH_ERRORS = {
-  'auth/network-request-failed': 'Internet nahi hai. Pehli baar login ke liye internet chahiye.',
-  'auth/popup-closed-by-user': 'Login window band ho gayi. Dobara "Google se login" dabayein.',
-  'auth/cancelled-popup-request': 'Login window band ho gayi. Dobara try karein.',
-  'auth/unauthorized-domain':
-    'Ye website Firebase me allowed nahi hai. Firebase Console > Authentication > Settings > Authorized domains me ise jodein.',
-  'auth/operation-not-allowed':
-    'Firebase me Google login chalu nahi hai. Firebase Console > Authentication > Sign-in method me Google ko Enable karein.',
-  'auth/too-many-requests': 'Bahut baar try hua. Thodi der baad dobara karein.',
+  'auth/network-request-failed': 'auth.network',
+  'auth/popup-closed-by-user': 'auth.closed',
+  'auth/cancelled-popup-request': 'auth.closed',
+  'auth/unauthorized-domain': 'auth.domain',
+  'auth/operation-not-allowed': 'auth.notAllowed',
+  'auth/configuration-not-found': 'auth.notAllowed',
+  'auth/too-many-requests': 'auth.tooMany',
 };
 
 export function authErrorMessage(err) {
-  return AUTH_ERRORS[err?.code] || `Login nahi ho paaya (${err?.code || err?.message || 'anjaan galti'}).`;
+  const key = AUTH_ERRORS[err?.code];
+  return key ? t(key) : t('auth.unknown', { code: err?.code || err?.message || '?' });
 }
 
 export function watchAuth(cb) {
@@ -88,25 +89,28 @@ export function createFirebaseStore(uid) {
   const base = `users/${uid}`;
   const laboursCol = collection(db, `${base}/labours`);
   const monthsCol = collection(db, `${base}/months`);
+  const xmonthsCol = collection(db, `${base}/xmonths`); // kharche, mahine ke hisab se
   const settingsRef = doc(db, `${base}/meta/settings`);
 
   return {
     kind: 'firebase',
 
     subscribe(onData, onStatus, onError) {
-      const state = { rate: 10, labours: [], entries: [], loaded: { s: false, l: false, m: false } };
-      const pending = { s: false, l: false, m: false };
+      const state = { rate: 10, xcats: [], labours: [], entries: [], expenses: [], loaded: { s: false, l: false, m: false, x: false } };
+      const pending = { s: false, l: false, m: false, x: false };
       const emit = () => {
-        if (state.loaded.s && state.loaded.l && state.loaded.m) {
-          onData({ rate: state.rate, labours: state.labours, entries: state.entries });
+        const L = state.loaded;
+        if (L.s && L.l && L.m && L.x) {
+          onData({ rate: state.rate, xcats: state.xcats, labours: state.labours, entries: state.entries, expenses: state.expenses });
         }
-        onStatus({ pending: pending.s || pending.l || pending.m });
+        onStatus({ pending: pending.s || pending.l || pending.m || pending.x });
       };
       const fail = (err) => onError?.(err);
       const opts = { includeMetadataChanges: true };
 
       const u1 = onSnapshot(settingsRef, opts, (snap) => {
         state.rate = Number(snap.data()?.rate) > 0 ? Number(snap.data().rate) : 10;
+        state.xcats = Array.isArray(snap.data()?.xcats) ? snap.data().xcats : [];
         state.loaded.s = true;
         pending.s = snap.metadata.hasPendingWrites;
         emit();
@@ -126,7 +130,14 @@ export function createFirebaseStore(uid) {
         emit();
       }, fail);
 
-      return () => { u1(); u2(); u3(); };
+      const u4 = onSnapshot(xmonthsCol, opts, (snap) => {
+        state.expenses = snap.docs.flatMap((d) => Object.values(d.data().x || {}));
+        state.loaded.x = true;
+        pending.x = snap.metadata.hasPendingWrites;
+        emit();
+      }, fail);
+
+      return () => { u1(); u2(); u3(); u4(); };
     },
 
     // Note: internet na ho to Firestore ka promise tab tak poora nahi hota jab tak data server par na pahunche.
@@ -155,7 +166,28 @@ export function createFirebaseStore(uid) {
       return setDoc(settingsRef, { rate }, { merge: true });
     },
 
-    async importData({ labours, entries, rate }) {
+    /** Kharcha save. Date badli ho to purane mahine se hatao. */
+    saveExpense(x, oldDate) {
+      const writes = [setDoc(doc(xmonthsCol, monthKey(x.d)), { x: { [x.id]: x } }, { merge: true })];
+      if (oldDate && monthKey(oldDate) !== monthKey(x.d)) {
+        writes.push(updateDoc(doc(xmonthsCol, monthKey(oldDate)), new FieldPath('x', x.id), deleteField()));
+      }
+      return Promise.all(writes);
+    },
+
+    deleteExpense(x) {
+      return updateDoc(doc(xmonthsCol, monthKey(x.d)), new FieldPath('x', x.id), deleteField());
+    },
+
+    newExpenseId() {
+      return doc(xmonthsCol).id;
+    },
+
+    setCategories(xcats) {
+      return setDoc(settingsRef, { xcats }, { merge: true });
+    },
+
+    async importData({ labours, entries, rate, expenses = [], xcats = null }) {
       const ops = [];
       for (const l of labours) {
         const { id, ...rest } = l;
@@ -168,7 +200,15 @@ export function createFirebaseStore(uid) {
         byMonth.get(mk)[entryKey(e.l, e.d)] = e;
       }
       for (const [mk, map] of byMonth) ops.push((b) => b.set(doc(monthsCol, mk), { e: map }, { merge: true }));
+      const xByMonth = new Map();
+      for (const x of expenses) {
+        const mk = monthKey(x.d);
+        if (!xByMonth.has(mk)) xByMonth.set(mk, {});
+        xByMonth.get(mk)[x.id] = x;
+      }
+      for (const [mk, map] of xByMonth) ops.push((b) => b.set(doc(xmonthsCol, mk), { x: map }, { merge: true }));
       if (rate) ops.push((b) => b.set(settingsRef, { rate }, { merge: true }));
+      if (xcats) ops.push((b) => b.set(settingsRef, { xcats }, { merge: true }));
 
       const commits = [];
       for (let i = 0; i < ops.length; i += 400) {

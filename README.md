@@ -10,7 +10,10 @@ Water cooler business ka roz ka hisab rakhne wala mobile app (PWA). Ye phone par
 | **Roz** | Kisi bhi din ka sab labour ka hisab, din ka total, "entry nahi hui" tag, aur WhatsApp parchi |
 | **Mahina** | Mahina ya saal ki table. Cooler baaki aur paisa baaki hamesha shuru se us period ke aakhir tak ka hota hai. |
 | **Report** | Din, Mahina, Saal ya Labour ki report. PDF, Word aur Excel me download. PDF me Hindi naam bhi sahi dikhte hain. |
-| **Labour** | Labour jodna, naam/phone badalna, list se hatana, har labour ka khata, aur "WhatsApp pe hisab bhejein" button. ⚙️ **Settings** me: rate, backup, restore/purana data, logout. |
+| **Kharcha** | Company ke kharche: Diesel, Gaadi service/repair, Salary, Driver ka paisa, Plant/machine, Bijli bill, Kiraya, Anya, aur apni nayi category bhi bana sakte hain. Har kharche me date, rakam, kisko diya aur note. Mahina/Saal/Poora ka category-wise total, aur **Bachat = labour se mila − kharcha**. PDF/Word/Excel report bhi. |
+| **Labour** | Labour jodna, naam/phone badalna, list se hatana, har labour ka khata, aur "WhatsApp pe hisab bhejein" button. ⚙️ **Settings** me: **bhasha (Hinglish / English / हिंदी)**, rate, backup, restore/purana data, logout. |
+
+**Bhasha:** Login screen par ya Settings me Hinglish, English ya हिंदी chunein. Poora app, WhatsApp message aur PDF/Word/Excel reports usi bhasha me bante hain. Ye choice har phone par alag yaad rehti hai.
 
 ### Hisab ke formula
 - Paisa bane = Lage × Rate (us din ka rate entry ke saath save hota hai; rate badalne se purani entry nahi badalti)
@@ -61,7 +64,8 @@ npm run deploy
 
 ## Developer notes
 - React + Vite, `vite-plugin-pwa` (offline cache), Firebase Auth (Google) + Firestore (offline persistence).
-- Data: `users/{uid}/labours/{id}`, `users/{uid}/meta/settings`, `users/{uid}/months/{YYYY-MM}`. Ek mahine ki saari entries ek document me map ki tarah rehti hain, taaki reads kam lagein aur free plan me aaraam se chale.
-- `npm test`: hisab, backup/import aur report files (PDF/Word/Excel) ke unit tests.
+- Data: `users/{uid}/labours/{id}`, `users/{uid}/meta/settings` (rate, apni kharcha category `xcats`), `users/{uid}/months/{YYYY-MM}` (entries), `users/{uid}/xmonths/{YYYY-MM}` (kharche). Ek mahine ki saari entries ek document me map ki tarah rehti hain, taaki reads kam lagein aur free plan me aaraam se chale.
+- `npm test`: hisab, kharcha, backup/import, report files (PDF/Word/Excel) aur teeno bhasha ke unit tests.
+- Bhasha ke saare words `src/i18n/strings.js` me hain: `[Hinglish, English, हिंदी]`.
 - `npm run dev`, phir `/?demo=1` kholein: bina Firebase ke demo mode (data browser me).
 - PDF: `pdf-lib` + `@pdf-lib/fontkit`, Noto Sans Devanagari aur Noto Sans (Latin subset) font embed hote hain (`public/fonts`, SIL Open Font License).

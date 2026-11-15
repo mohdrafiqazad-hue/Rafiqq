@@ -1,11 +1,11 @@
 // Poore app ka data aur "actions" (save, delete...) yahan se milte hain.
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { useUI } from '../components/ui.jsx';
-import { entryKey, groupByLabour, sortLabours } from '../lib/calc.js';
+import { entryKey, fmtRs, groupByLabour, sortLabours } from '../lib/calc.js';
+import { t } from '../i18n/index.js';
 
 const DataCtx = createContext(null);
 
-export const OFFLINE_MSG = 'Internet nahi hai, entry phone me save hai, net aate hi sync ho jayegi';
 
 export function useOnline() {
   const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
@@ -23,10 +23,10 @@ export function useOnline() {
 }
 
 function errMsg(err) {
-  if (err?.code === 'permission-denied') return 'Permission nahi hai. Firebase ke Firestore rules check karein (README dekhein).';
-  if (err?.code === 'resource-exhausted') return 'Firebase ki aaj ki free limit poori ho gayi. Kal phir chalega.';
-  if (err?.code === 'unavailable') return OFFLINE_MSG;
-  return err?.message || 'Kuch galat ho gaya. Dobara try karein.';
+  if (err?.code === 'permission-denied') return t('msg.perm');
+  if (err?.code === 'resource-exhausted') return t('msg.quota');
+  if (err?.code === 'unavailable') return t('msg.offline');
+  return err?.message || t('msg.unknown');
 }
 
 export function DataProvider({ store, user, onLogout, children }) {
@@ -47,9 +47,9 @@ export function DataProvider({ store, user, onLogout, children }) {
 
   /** Write chalao; turant feedback do (offline ho to bhi data phone me save ho chuka hota hai) */
   const run = useCallback((promise, okMsg) => {
-    Promise.resolve(promise).catch((err) => toast(`Save nahi hua: ${errMsg(err)}`, 'err', 6000));
+    Promise.resolve(promise).catch((err) => toast(t('msg.saveFail', { e: errMsg(err) }), 'err', 6000));
     if (okMsg) {
-      if (store.kind === 'firebase' && !navigator.onLine) toast(OFFLINE_MSG, 'warn', 5000);
+      if (store.kind === 'firebase' && !navigator.onLine) toast(t('msg.offline'), 'warn', 5000);
       else toast(okMsg, 'ok');
     }
   }, [store, toast]);
@@ -68,20 +68,33 @@ export function DataProvider({ store, user, onLogout, children }) {
       labours,
       active,
       entries: data.entries,
+      expenses: data.expenses || [],
+      xcats: data.xcats || [],
       byLabour: groupByLabour(data.entries),
       labourById: new Map(labours.map((l) => [l.id, l])),
       getEntry: (l, d) => entryIndex.get(entryKey(l, d)) || null,
-      saveEntry: (e, isUpdate) => run(store.saveEntry(e), isUpdate ? 'Entry update ho gayi ✓' : 'Entry save ho gayi ✓'),
-      deleteEntry: (l, d) => run(store.deleteEntry(l, d), 'Entry delete ho gayi'),
-      saveLabour: (lab, msg) => run(store.saveLabour(lab), msg || 'Labour save ho gaya ✓'),
+      saveEntry: (e, isUpdate) => run(store.saveEntry(e), isUpdate ? t('msg.updated') : t('msg.saved')),
+      deleteEntry: (l, d) => run(store.deleteEntry(l, d), t('msg.deleted')),
+      saveLabour: (lab, msg) => run(store.saveLabour(lab), msg || t('msg.labourSaved')),
       addLabour: (name, phone) => {
         const id = store.newLabourId();
         const o = labours.reduce((mx, l) => Math.max(mx, Number(l.o) || 0), -1) + 1;
-        run(store.saveLabour({ id, name, phone, archived: false, o }), `${name} jud gaya ✓`);
+        run(store.saveLabour({ id, name, phone, archived: false, o }), t('msg.labourAdded', { name }));
         return id;
       },
-      setRate: (r) => run(store.setRate(r), `Rate ₹${r} ho gaya ✓`),
-      importData: (payload) => run(store.importData(payload), 'Data aa gaya ✓'),
+      setRate: (r) => run(store.setRate(r), t('msg.rate', { r: fmtRs(r) })),
+      saveExpense: (x, oldDate) => {
+        const item = x.id ? x : { ...x, id: store.newExpenseId() };
+        run(store.saveExpense(item, oldDate), t('msg.xSaved'));
+      },
+      deleteExpense: (x) => run(store.deleteExpense(x), t('msg.xDeleted')),
+      setCategories: (cats) => run(store.setCategories(cats), t('msg.catsSaved')),
+      importData: (payload) => {
+        // Category: purani + file wali dono rakho
+        const cur = data.xcats || [];
+        const extra = (payload.xcats || []).filter((c) => !cur.some((x) => x.id === c.id));
+        run(store.importData({ ...payload, xcats: extra.length ? [...cur, ...extra] : null }), t('msg.imported'));
+      },
       logout: onLogout,
     };
   }, [data, store, user, online, pending, run, onLogout]);
@@ -90,11 +103,11 @@ export function DataProvider({ store, user, onLogout, children }) {
     return (
       <div className="center-screen">
         <p className="error-box">{loadError}</p>
-        <button className="btn" onClick={onLogout}>Logout</button>
+        <button className="btn" onClick={onLogout}>{t('c.logout')}</button>
       </div>
     );
   }
-  if (!value) return <div className="center-screen"><div className="spinner" /><p>Data load ho raha hai…</p></div>;
+  if (!value) return <div className="center-screen"><div className="spinner" /><p>{t('loading.data')}</p></div>;
   return <DataCtx.Provider value={value}>{children}</DataCtx.Provider>;
 }
 

@@ -12,7 +12,18 @@ export function safeId(id) {
   return s.slice(0, 200);
 }
 
-export function buildBackup({ rate, labours, entries }) {
+function bkError(code, message, vars) {
+  const err = new Error(message);
+  err.code = code;
+  err.vars = vars;
+  return err;
+}
+
+const cleanExpense = (x) => ({
+  id: x.id, d: x.d, c: String(x.c || 'other'), a: num(x.a), p: String(x.p || ''), n: String(x.n || ''),
+});
+
+export function buildBackup({ rate, labours, entries, expenses = [], xcats = [] }) {
   return {
     app: APP_ID,
     v: 1,
@@ -27,6 +38,8 @@ export function buildBackup({ rate, labours, entries }) {
     entries: [...entries]
       .sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : String(a.l).localeCompare(String(b.l))))
       .map((e) => ({ l: e.l, d: e.d, t: num(e.t), r: num(e.r), p: num(e.p), m: num(e.m), k: num(e.k) })),
+    expenses: [...expenses].sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0)).map(cleanExpense),
+    xcats: xcats.map((c) => ({ id: c.id, name: c.name })),
   };
 }
 
@@ -39,13 +52,13 @@ export function parseBackup(text) {
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error('Ye file sahi backup (JSON) file nahi hai.');
+    throw bkError('bk.notjson', 'Ye file sahi backup (JSON) file nahi hai.');
   }
   if (!data || typeof data !== 'object' || !Array.isArray(data.labours) || !Array.isArray(data.entries)) {
-    throw new Error('Is file me labour/entries ka data nahi mila. Sahi backup file chunein.');
+    throw bkError('bk.nodata', 'Is file me labour/entries ka data nahi mila. Sahi backup file chunein.');
   }
   if (data.app && data.app !== APP_ID) {
-    throw new Error(`Ye file kisi doosre app ki hai ("${data.app}").`);
+    throw bkError('bk.otherapp', `Ye file kisi doosre app ki hai ("${data.app}").`, { app: data.app });
   }
 
   const fileRate = num(data.rate) > 0 ? num(data.rate) : null;
@@ -79,7 +92,32 @@ export function parseBackup(text) {
     entryMap.set(entryKey(l, e.d), { l, d: e.d, t: num(e.t), r: num(e.r), p: num(e.p), m: num(e.m), k });
   }
 
-  return { rate: fileRate, labours, entries: [...entryMap.values()], skipped, exportedAt: data.exportedAt || null };
+  // Kharche (naye app ke backup me hote hain; purani file me nahi)
+  const expMap = new Map();
+  if (Array.isArray(data.expenses)) {
+    for (const x of data.expenses) {
+      if (!x || x.id === undefined || !isValidISO(x.d) || !(num(x.a) > 0)) {
+        skipped++;
+        continue;
+      }
+      const ex = cleanExpense(x);
+      ex.id = safeId(x.id);
+      expMap.set(ex.id, ex);
+    }
+  }
+  const xcats = Array.isArray(data.xcats)
+    ? data.xcats.filter((c) => c && c.id && c.name).map((c) => ({ id: safeId(c.id), name: String(c.name).trim() }))
+    : [];
+
+  return {
+    rate: fileRate,
+    labours,
+    entries: [...entryMap.values()],
+    expenses: [...expMap.values()],
+    xcats,
+    skipped,
+    exportedAt: data.exportedAt || null,
+  };
 }
 
 /**
@@ -95,7 +133,14 @@ export function planImport(current, incoming) {
   let replacedEntries = 0;
   for (const l of incoming.labours) (curLabours.has(l.id) ? updatedLabours++ : newLabours++);
   for (const e of incoming.entries) (curEntries.has(entryKey(e.l, e.d)) ? replacedEntries++ : newEntries++);
+  const curExp = new Set((current.expenses || []).map((x) => x.id));
+  let newExpenses = 0;
+  let replacedExpenses = 0;
+  for (const x of incoming.expenses || []) (curExp.has(x.id) ? replacedExpenses++ : newExpenses++);
   return {
+    expenseCount: (incoming.expenses || []).length,
+    newExpenses,
+    replacedExpenses,
     labourCount: incoming.labours.length,
     entryCount: incoming.entries.length,
     newLabours,
@@ -113,5 +158,14 @@ export function mergeData(current, incoming) {
   for (const l of incoming.labours) labours.set(l.id, { ...labours.get(l.id), ...l });
   const entries = new Map(current.entries.map((e) => [entryKey(e.l, e.d), e]));
   for (const e of incoming.entries) entries.set(entryKey(e.l, e.d), e);
-  return { labours: [...labours.values()], entries: [...entries.values()] };
+  const expenses = new Map((current.expenses || []).map((x) => [x.id, x]));
+  for (const x of incoming.expenses || []) expenses.set(x.id, x);
+  const xcats = new Map((current.xcats || []).map((c) => [c.id, c]));
+  for (const c of incoming.xcats || []) xcats.set(c.id, c);
+  return {
+    labours: [...labours.values()],
+    entries: [...entries.values()],
+    expenses: [...expenses.values()],
+    xcats: [...xcats.values()],
+  };
 }

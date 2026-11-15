@@ -1,5 +1,7 @@
 // Saari dates "YYYY-MM-DD" string me rakhi jaati hain (local time), taaki timezone ki gadbad na ho.
 
+import { getLang } from '../i18n/index.js';
+
 const pad = (n) => String(n).padStart(2, '0');
 
 export function toISO(date) {
@@ -46,29 +48,38 @@ export function addMonths(ym, n) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 }
 
-export const MONTHS_HI = [
-  'Janvari', 'Farvari', 'March', 'April', 'Mai', 'June',
-  'July', 'August', 'Sitambar', 'Aktubar', 'Navambar', 'Disambar',
-];
-export const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const DAYS_HI = ['Ravivar', 'Somvar', 'Mangalvar', 'Budhvar', 'Guruvar', 'Shukravar', 'Shanivar'];
+const MONTHS = {
+  hl: ['Janvari', 'Farvari', 'March', 'April', 'Mai', 'June', 'July', 'August', 'Sitambar', 'Aktubar', 'Navambar', 'Disambar'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  hi: ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'],
+};
+const MONTHS_SHORT = {
+  hl: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  hi: ['जन', 'फ़र', 'मार्च', 'अप्रै', 'मई', 'जून', 'जुला', 'अग', 'सित', 'अक्टू', 'नव', 'दिस'],
+};
+const DAYS = {
+  hl: ['Ravivar', 'Somvar', 'Mangalvar', 'Budhvar', 'Guruvar', 'Shukravar', 'Shanivar'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  hi: ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'],
+};
 
 /** "15 Nov 2026" */
 export function fmtDate(iso) {
   if (!iso) return '';
   const [y, m, d] = iso.split('-').map(Number);
-  return `${d} ${MONTHS_SHORT[m - 1]} ${y}`;
+  return `${d} ${MONTHS_SHORT[getLang()][m - 1]} ${y}`;
 }
 
 /** "Ravivar, 15 Nov 2026" */
 export function fmtDateLong(iso) {
-  return `${DAYS_HI[fromISO(iso).getDay()]}, ${fmtDate(iso)}`;
+  return `${DAYS[getLang()][fromISO(iso).getDay()]}, ${fmtDate(iso)}`;
 }
 
 /** "Navambar 2026" */
 export function fmtMonth(ym) {
   const [y, m] = ym.split('-').map(Number);
-  return `${MONTHS_HI[m - 1]} ${y}`;
+  return `${MONTHS[getLang()][m - 1]} ${y}`;
 }
 
 export function fmtDateTime(d = new Date()) {

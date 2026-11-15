@@ -3,27 +3,30 @@
 
 import { entryKey } from '../lib/calc.js';
 import { mergeData } from '../lib/backup.js';
+import { t } from '../i18n/index.js';
 
 const KEY = 'mgm-local-data-v1';
 
 function read() {
   try {
     const d = JSON.parse(localStorage.getItem(KEY));
-    if (d && Array.isArray(d.labours) && Array.isArray(d.entries)) return d;
+    if (d && Array.isArray(d.labours) && Array.isArray(d.entries)) {
+      return { expenses: [], xcats: [], ...d };
+    }
   } catch { /* khaali */ }
-  return { rate: 10, labours: [], entries: [] };
+  return { rate: 10, labours: [], entries: [], expenses: [], xcats: [] };
 }
 
 export function createLocalStore() {
   let data = read();
   const listeners = new Set();
   const commit = (next) => {
-    data = next;
     try {
-      localStorage.setItem(KEY, JSON.stringify(data));
+      localStorage.setItem(KEY, JSON.stringify(next));
     } catch {
-      return Promise.reject(new Error('Phone me jagah nahi hai, data save nahi hua.'));
+      return Promise.reject(new Error(t('msg.noSpace')));
     }
+    data = next;
     listeners.forEach((fn) => fn({ ...data }));
     return Promise.resolve();
   };
@@ -56,9 +59,21 @@ export function createLocalStore() {
     setRate(rate) {
       return commit({ ...data, rate });
     },
-    importData({ labours, entries, rate }) {
-      const merged = mergeData(data, { labours, entries });
-      return commit({ rate: rate || data.rate, ...merged });
+    saveExpense(x) {
+      return commit({ ...data, expenses: [...data.expenses.filter((y) => y.id !== x.id), x] });
+    },
+    deleteExpense(x) {
+      return commit({ ...data, expenses: data.expenses.filter((y) => y.id !== x.id) });
+    },
+    newExpenseId() {
+      return `X${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    },
+    setCategories(xcats) {
+      return commit({ ...data, xcats });
+    },
+    importData({ labours, entries, rate, expenses = [], xcats = null }) {
+      const merged = mergeData(data, { labours, entries, expenses, xcats: [] });
+      return commit({ ...data, ...merged, rate: rate || data.rate, xcats: xcats || data.xcats });
     },
   };
 }

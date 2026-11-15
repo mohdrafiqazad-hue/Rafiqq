@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import { UIProvider } from './components/ui.jsx';
+import { LangProvider } from './i18n/LangContext.jsx';
 import App from './App.jsx';
 import './styles.css';
 
@@ -24,9 +25,11 @@ function Root() {
     return () => updateListeners.delete(setUpdateReady);
   }, []);
   return (
-    <UIProvider>
-      <App updateReady={updateReady} onUpdate={() => updateSW?.(true)} />
-    </UIProvider>
+    <LangProvider>
+      <UIProvider>
+        <App updateReady={updateReady} onUpdate={() => updateSW?.(true)} />
+      </UIProvider>
+    </LangProvider>
   );
 }
 

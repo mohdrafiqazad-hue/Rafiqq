@@ -8,6 +8,7 @@ import { buildLabourReport, periodRange } from '../lib/reports.js';
 import { openWhatsApp, khataText, waNumber } from '../lib/whatsapp.js';
 import { LabourForm } from './Labours.jsx';
 import { PeriodPicker, defaultPeriod } from './Report.jsx';
+import { t } from '../i18n/index.js';
 
 function OpeningForm({ labour, onSave, onRemove, onClose, hasEntriesBefore }) {
   const [d, setD] = useState(labour.ob?.d || today());
@@ -15,33 +16,30 @@ function OpeningForm({ labour, onSave, onRemove, onClose, hasEntriesBefore }) {
   const [m, setM] = useState(labour.ob ? String(labour.ob.m) : '');
   const [err, setErr] = useState('');
   return (
-    <Sheet title="Pichla baaki (opening balance)" onClose={onClose}>
-      <p className="muted small">
-        Purane record ke liye: is date ke din ke ant tak labour ke paas kitne cooler aur kitna paisa baaki tha.
-        Is date ke baad ka hisab isi baaki se aage chalega.
-      </p>
+    <Sheet title={t('l.obTitle')} onClose={onClose}>
+      <p className="muted small">{t('l.obHelp')}</p>
       <label className="field">
-        <span>Kis date tak ka baaki</span>
+        <span>{t('l.obDate')}</span>
         <input type="date" value={d} onChange={(e) => setD(e.target.value)} />
       </label>
       <div className="grid2">
-        <NumField label="Cooler baaki" value={c} onChange={setC} allowNegative />
-        <NumField label="Paisa baaki (₹)" value={m} onChange={setM} allowNegative decimal />
+        <NumField label={t('l.obC')} value={c} onChange={setC} allowNegative />
+        <NumField label={t('l.obM')} value={m} onChange={setM} allowNegative decimal />
       </div>
       {hasEntriesBefore(d) && (
-        <div className="warn-box">Is date tak app me kuch entries hain. Woh is opening baaki me shaamil maani jayengi (dobara nahi judengi).</div>
+        <div className="warn-box">{t('l.obWarn')}</div>
       )}
       {err && <div className="error-box">{err}</div>}
       <div className="row-actions">
-        {labour.ob && <button className="btn btn-danger-outline" onClick={onRemove}>Hatayein</button>}
+        {labour.ob && <button className="btn btn-danger-outline" onClick={onRemove}>{t('l.obRemove')}</button>}
         <button
           className="btn btn-primary btn-big grow"
           onClick={() => {
-            if (!isValidISO(d)) return setErr('Sahi date chunein.');
+            if (!isValidISO(d)) return setErr(t('l.obErrDate'));
             onSave({ d, c: Number(c) || 0, m: Number(m) || 0 });
           }}
         >
-          ✓ Save
+          {t('c.save')}
         </button>
       </div>
     </Sheet>
@@ -73,13 +71,13 @@ export default function Khata({ labour, onBack }) {
 
   const archive = async () => {
     const ok = await confirm({
-      title: `${labour.name} ko list se hatayein?`,
-      message: 'Labour Entry list se hat jayega, lekin uska purana hisab reports me rahega. Baad me "Wapis laayein" kar sakte hain.',
-      okText: 'Haan, hatayein',
+      title: t('l.archiveTitle', { name: labour.name }),
+      message: t('l.archiveMsg'),
+      okText: t('l.archiveOk'),
       danger: true,
     });
     if (ok) {
-      D.saveLabour({ ...labour, archived: true }, `${labour.name} list se hata diya`);
+      D.saveLabour({ ...labour, archived: true }, t('l.archived1', { name: labour.name }));
       back();
     }
   };
@@ -87,26 +85,26 @@ export default function Khata({ labour, onBack }) {
   return (
     <div className="screen">
       <div className="subhead">
-        <button className="btn btn-small" onClick={back}>‹ Wapis</button>
-        <div className="subhead-title">{labour.name}{labour.archived ? ' (hataya)' : ''}</div>
+        <button className="btn btn-small" onClick={back}>{t('c.back')}</button>
+        <div className="subhead-title">{labour.name}{labour.archived ? t('c.archivedSuffix') : ''}</div>
       </div>
 
       <div className="card">
-        <div className="muted small">{labour.phone ? `📞 ${labour.phone}` : 'Phone number nahi hai'}</div>
+        <div className="muted small">{labour.phone ? `📞 ${labour.phone}` : t('l.phoneNone')}</div>
         <div className="kul-baaki big">
-          <span>Abhi kul baaki</span>
-          <b>{now.c} cooler · <span className={now.m < 0 ? 'neg' : ''}>{fmtRs(now.m)}</span></b>
+          <span>{t('l.nowBal')}</span>
+          <b>{now.c} {t('c.cooler')} · <span className={now.m < 0 ? 'neg' : ''}>{fmtRs(now.m)}</span></b>
         </div>
         {labour.ob && (
-          <div className="muted small">Opening baaki: {fmtDate(labour.ob.d)} tak {labour.ob.c} cooler · {fmtRs(labour.ob.m)}</div>
+          <div className="muted small">{t('l.obInfo', { date: fmtDate(labour.ob.d), c: labour.ob.c, m: fmtRs(labour.ob.m) })}</div>
         )}
         <div className="btn-wrap">
-          <button className="btn btn-small" onClick={() => setEditing(true)}>✎ Naam/Phone</button>
-          <button className="btn btn-small" onClick={() => setOpening(true)}>Pichla baaki</button>
+          <button className="btn btn-small" onClick={() => setEditing(true)}>{t('l.editBtn')}</button>
+          <button className="btn btn-small" onClick={() => setOpening(true)}>{t('l.obBtn')}</button>
           {labour.archived ? (
-            <button className="btn btn-small" onClick={() => D.saveLabour({ ...labour, archived: false }, `${labour.name} wapis aa gaya ✓`)}>Wapis laayein</button>
+            <button className="btn btn-small" onClick={() => D.saveLabour({ ...labour, archived: false }, t('l.restored', { name: labour.name }))}>{t('l.restore')}</button>
           ) : (
-            <button className="btn btn-small btn-danger-outline" onClick={archive}>List se hatayein</button>
+            <button className="btn btn-small btn-danger-outline" onClick={archive}>{t('l.archiveBtn')}</button>
           )}
         </div>
       </div>
@@ -118,13 +116,13 @@ export default function Khata({ labour, onBack }) {
         className="btn btn-wa full"
         onClick={() => openWhatsApp(labour.phone, khataText(labour, L, label))}
       >
-        🟢 WhatsApp pe hisab bhejein{waNumber(labour.phone) ? '' : ' (number chunein)'}
+        {t('l.wa')}{waNumber(labour.phone) ? '' : t('l.waPick')}
       </button>
       <DownloadBar getReport={() => report} />
 
       {editing && (
         <LabourForm
-          title="Naam / Phone badlein"
+          title={t('l.formEdit')}
           initial={labour}
           onClose={() => setEditing(false)}
           onSave={(name, phone) => {
@@ -140,11 +138,11 @@ export default function Khata({ labour, onBack }) {
           onClose={() => setOpening(false)}
           onRemove={() => {
             const { ob, ...rest } = labour;
-            D.saveLabour(rest, 'Opening baaki hata diya');
+            D.saveLabour(rest, t('l.obRemoved'));
             setOpening(false);
           }}
           onSave={(ob) => {
-            D.saveLabour({ ...labour, ob }, 'Pichla baaki save ho gaya ✓');
+            D.saveLabour({ ...labour, ob }, t('l.obSaved'));
             setOpening(false);
           }}
         />

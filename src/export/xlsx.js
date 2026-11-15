@@ -2,14 +2,19 @@
 import ExcelJS from 'exceljs';
 import { COMPANY } from '../lib/reports.js';
 import { fmtDateTime } from '../lib/dates.js';
+import { t } from '../i18n/index.js';
 
 export async function reportToXlsx(report) {
   const wb = new ExcelJS.Workbook();
   wb.creator = COMPANY;
   wb.created = new Date();
 
+  const used = new Set();
   report.sections.forEach((sec, si) => {
-    const name = (sec.heading || (report.sections.length > 1 ? `Sheet ${si + 1}` : 'Report')).slice(0, 31);
+    // Excel sheet ke naam me : \ / ? * [ ] nahi chalte, aur naam alag-alag hone chahiye
+    let name = (sec.heading || (report.sections.length > 1 ? `Sheet ${si + 1}` : 'Report')).replace(/[:\\/?*[\]]/g, ' ').slice(0, 28).trim() || `Sheet ${si + 1}`;
+    while (used.has(name.toLowerCase())) name = `${name.slice(0, 26)} ${si + 1}`;
+    used.add(name.toLowerCase());
     const ws = wb.addWorksheet(name, { views: [{ state: 'frozen', ySplit: 5 }] });
     const n = sec.columns.length;
 
@@ -20,7 +25,7 @@ export async function reportToXlsx(report) {
     ws.getCell(2, 1).value = report.title + (sec.heading ? ` (${sec.heading})` : '');
     ws.getCell(2, 1).font = { bold: true, size: 12 };
     ws.mergeCells(3, 1, 3, n);
-    ws.getCell(3, 1).value = `${report.subtitle ? `${report.subtitle} · ` : ''}Banaya: ${fmtDateTime()}`;
+    ws.getCell(3, 1).value = `${report.subtitle ? `${report.subtitle} · ` : ''}${t('rep.generated', { dt: fmtDateTime() })}`;
     ws.getCell(3, 1).font = { size: 9, color: { argb: 'FF666666' } };
 
     const header = ws.getRow(5);
@@ -30,7 +35,7 @@ export async function reportToXlsx(report) {
       cell.font = { bold: true };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEEF5' } };
       cell.alignment = { horizontal: c.align === 'right' ? 'right' : 'left' };
-      ws.getColumn(i + 1).width = c.wide ? 30 : 13;
+      ws.getColumn(i + 1).width = c.wide ? 30 : c.w ? Math.round(10 * c.w) : 13;
       if (c.money) ws.getColumn(i + 1).numFmt = '"₹"#,##0.##;[Red]-"₹"#,##0.##';
       else if (c.align === 'right') ws.getColumn(i + 1).numFmt = '#,##0.##;[Red]-#,##0.##';
     });

@@ -4,6 +4,7 @@ import { useUI } from '../components/ui.jsx';
 import { DateBar, NumField } from '../components/common.jsx';
 import { balanceBefore, fmtRs, nextPendingLabour, parchi } from '../lib/calc.js';
 import { addDays, fmtDate } from '../lib/dates.js';
+import { t } from '../i18n/index.js';
 
 const EMPTY = { t: '', r: '', p: '', m: '' };
 const toForm = (e) => (e ? { t: String(e.t ?? ''), r: String(e.r ?? ''), p: String(e.p ?? ''), m: String(e.m ?? '') } : EMPTY);
@@ -49,9 +50,9 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
       <div className="screen">
         <DateBar date={date} onChange={setDate} />
         <div className="empty-card">
-          <p>Abhi koi labour nahi hai.</p>
-          <p className="muted">Pehle Labour tab me labour jodein, ya Settings se purane app ka backup laayein.</p>
-          <button className="btn btn-primary" onClick={() => goTab('labour')}>+ Labour jodein</button>
+          <p>{t('e.noLabour')}</p>
+          <p className="muted">{t('e.noLabourHint')}</p>
+          <button className="btn btn-primary" onClick={() => goTab('labour')}>{t('e.addLabour')}</button>
         </div>
       </div>
     );
@@ -68,17 +69,17 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
     if (!labour) return;
     if (!anyValue && !existing) {
       const ok = await confirm({
-        title: 'Sab khaali hai',
-        message: `${labour.name} ki ${fmtDate(date)} ki entry 0 ke saath save karein? (Matlab us din kuch nahi hua)`,
-        okText: 'Haan, save karein',
+        title: t('e.emptyTitle'),
+        message: t('e.emptyMsg', { name: labour.name, date: fmtDate(date) }),
+        okText: t('e.emptyOk'),
       });
       if (!ok) return;
     }
     if (P.tooManyReturned) {
       const ok = await confirm({
-        title: 'Dhyan dein',
-        message: `Wapis aaye (${P.r}) pichle baaki + le gaye (${P.prevC + P.t}) se zyada hain. Phir bhi save karein?`,
-        okText: 'Phir bhi save',
+        title: t('e.tooManyTitle'),
+        message: t('e.tooManyMsg', { r: P.r, sum: P.prevC + P.t }),
+        okText: t('e.tooManyOk'),
       });
       if (!ok) return;
     }
@@ -93,7 +94,7 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
     if (next) setLabourId(next);
     else {
       const nd = addDays(date, 1);
-      toast(`${fmtDate(date)} ke sab labour ho gaye. Ab ${fmtDate(nd)}`, 'ok', 3500);
+      toast(t('e.allDone', { date: fmtDate(date), next: fmtDate(nd) }), 'ok', 3500);
       setDate(nd);
       setLabourId(D.active[0]?.id || null);
     }
@@ -101,16 +102,16 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
 
   const del = async () => {
     const ok = await confirm({
-      title: 'Entry delete karein?',
-      message: `${labour.name} ki ${fmtDate(date)} wali entry hamesha ke liye hat jayegi.`,
-      okText: 'Haan, delete',
+      title: t('e.delTitle'),
+      message: t('e.delMsg', { name: labour.name, date: fmtDate(date) }),
+      okText: t('e.delOk'),
       danger: true,
     });
     if (!ok) return;
     const ok2 = await confirm({
-      title: 'Pakka?',
-      message: 'Dobara confirm karein: ye entry delete ho jayegi.',
-      okText: 'Delete karein',
+      title: t('e.del2Title'),
+      message: t('e.del2Msg'),
+      okText: t('e.del2Ok'),
       danger: true,
     });
     if (ok2) D.deleteEntry(labour.id, date);
@@ -120,7 +121,7 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
     <div className="screen">
       <DateBar date={date} onChange={setDate} />
 
-      <div className="chips" role="listbox" aria-label="Labour chunein">
+      <div className="chips" role="listbox" aria-label={t('e.pickLabour')}>
         {chips.map((l) => (
           <button
             key={l.id}
@@ -129,13 +130,13 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
             className={`chip ${l.id === labourId ? 'on' : ''}`}
             onClick={() => setLabourId(l.id)}
           >
-            {doneIds.has(l.id) && <span className="dot" aria-label="entry ho gayi" />}
+            {doneIds.has(l.id) && <span className="dot" aria-label={t('e.doneDot')} />}
             {l.name}
           </button>
         ))}
       </div>
       <div className="chips-info muted">
-        {doneIds.size}/{D.active.length} labour ki entry ho gayi
+        {t('e.progress', { done: doneIds.size, total: D.active.length })}
       </div>
 
       {labour && (
@@ -143,47 +144,47 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
           <div className="entry-head">
             <div>
               <div className="entry-name">{labour.name}</div>
-              <div className="muted small">Pichla baaki: {prev.c} cooler · {fmtRs(prev.m)}</div>
+              <div className="muted small">{t('e.prev', { c: prev.c, m: fmtRs(prev.m) })}</div>
             </div>
-            {existing ? <span className="pill pill-green">Entry bani hai</span> : <span className="pill">Nayi entry</span>}
+            {existing ? <span className="pill pill-green">{t('e.exists')}</span> : <span className="pill">{t('e.new')}</span>}
           </div>
 
           <div className="grid2">
-            <NumField label="Cooler le gaye" value={form.t} onChange={set('t')} inputRef={firstRef} />
-            <NumField label="Wapis aaye" value={form.r} onChange={set('r')} />
-            <NumField label="Market me lage" value={form.p} onChange={set('p')} />
-            <NumField label="Paisa mila (₹)" value={form.m} onChange={set('m')} onEnter={save} />
+            <NumField label={t('e.t')} value={form.t} onChange={set('t')} inputRef={firstRef} />
+            <NumField label={t('e.r')} value={form.r} onChange={set('r')} />
+            <NumField label={t('e.p')} value={form.p} onChange={set('p')} />
+            <NumField label={t('e.m')} value={form.m} onChange={set('m')} onEnter={save} />
           </div>
 
           {P.tooManyReturned && (
             <div className="warn-box">
-              ⚠️ Wapis aaye ({P.r}) zyada hain! Pichla baaki {P.prevC} + le gaye {P.t} = sirf {P.prevC + P.t} cooler the.
+              {t('e.warn', { r: P.r, prev: P.prevC, t: P.t, sum: P.prevC + P.t })}
             </div>
           )}
 
-          <div className="parchi" aria-label="Parchi">
-            <div className="parchi-title">Parchi</div>
-            <div className="prow"><span>Pichla baaki</span><b>{P.prevC}</b></div>
-            <div className="prow"><span>+ Aaj le gaye</span><b>{P.t}</b></div>
-            <div className="prow"><span>− Wapis aaye</span><b>{P.r}</b></div>
-            <div className="prow ptotal"><span>= Market me baaki cooler</span><b className={P.coolerBaaki < 0 ? 'neg' : ''}>{P.coolerBaaki}</b></div>
+          <div className="parchi" aria-label={t('e.parchi')}>
+            <div className="parchi-title">{t('e.parchi')}</div>
+            <div className="prow"><span>{t('e.pPrev')}</span><b>{P.prevC}</b></div>
+            <div className="prow"><span>{t('e.pTaken')}</span><b>{P.t}</b></div>
+            <div className="prow"><span>{t('e.pRet')}</span><b>{P.r}</b></div>
+            <div className="prow ptotal"><span>{t('e.pCool')}</span><b className={P.coolerBaaki < 0 ? 'neg' : ''}>{P.coolerBaaki}</b></div>
             <div className="psep" />
-            <div className="prow"><span>Lage {P.p} × {fmtRs(P.k)}</span><b>{fmtRs(P.paisaBane)}</b></div>
-            <div className="prow"><span>+ Pichla paisa baaki</span><b>{fmtRs(P.prevM)}</b></div>
-            <div className="prow"><span>− Paisa mila</span><b>{fmtRs(P.mila)}</b></div>
-            <div className="prow ptotal"><span>= Kul paisa baaki</span><b className={P.kulPaisaBaaki < 0 ? 'neg' : ''}>{fmtRs(P.kulPaisaBaaki)}</b></div>
+            <div className="prow"><span>{t('e.pLage', { p: P.p, k: fmtRs(P.k) })}</span><b>{fmtRs(P.paisaBane)}</b></div>
+            <div className="prow"><span>{t('e.pPrevM')}</span><b>{fmtRs(P.prevM)}</b></div>
+            <div className="prow"><span>{t('e.pMila')}</span><b>{fmtRs(P.mila)}</b></div>
+            <div className="prow ptotal"><span>{t('e.pTotal')}</span><b className={P.kulPaisaBaaki < 0 ? 'neg' : ''}>{fmtRs(P.kulPaisaBaaki)}</b></div>
             {existing && Number(existing.k) !== Number(D.rate) && (
-              <div className="muted small">Is entry ka rate {fmtRs(existing.k)} hai (us din ka). Abhi ka rate {fmtRs(D.rate)}.</div>
+              <div className="muted small">{t('e.rateNote', { k: fmtRs(existing.k), now: fmtRs(D.rate) })}</div>
             )}
           </div>
 
           {existing ? (
             <div className="row-actions">
-              <button className="btn btn-danger-outline" onClick={del}>🗑 Delete</button>
-              <button className="btn btn-primary btn-big grow" onClick={save}>✓ Update</button>
+              <button className="btn btn-danger-outline" onClick={del}>{t('c.delete')}</button>
+              <button className="btn btn-primary btn-big grow" onClick={save}>{t('c.update')}</button>
             </div>
           ) : (
-            <button className="btn btn-primary btn-big full" onClick={save}>✓ Save</button>
+            <button className="btn btn-primary btn-big full" onClick={save}>{t('c.save')}</button>
           )}
         </div>
       )}

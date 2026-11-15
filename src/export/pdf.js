@@ -6,6 +6,7 @@ import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { COMPANY, fmtCell } from '../lib/reports.js';
 import { fmtDateTime } from '../lib/dates.js';
+import { t } from '../i18n/index.js';
 
 const FONT_FILES = {
   dev: 'fonts/NotoSansDevanagari-Regular.ttf',
@@ -20,7 +21,7 @@ function loadFontBytes(baseUrl) {
     fontBytesPromise = Promise.all(
       Object.entries(FONT_FILES).map(async ([k, path]) => {
         const res = await fetch(baseUrl + path);
-        if (!res.ok) throw new Error('PDF ka font load nahi hua. Internet chalu karke ek baar app kholein.');
+        if (!res.ok) throw new Error(t('rep.fontErr'));
         return [k, await res.arrayBuffer()];
       }),
     ).then(Object.fromEntries).catch((e) => {
@@ -110,7 +111,7 @@ export async function reportToPdf(report, { baseUrl = '/' } = {}) {
     draw(fit(report.subtitle, 9, false, usable), M, y, 9, { color: grey });
     y -= 13;
   }
-  draw(`Banaya: ${fmtDateTime()}`, M, y, 9, { color: grey });
+  draw(t('rep.generated', { dt: fmtDateTime() }), M, y, 9, { color: grey });
   y -= 10;
   page.drawLine({ start: { x: M, y }, end: { x: PAGE[0] - M, y }, thickness: 1, color: brand });
   y -= 14;
@@ -120,9 +121,10 @@ export async function reportToPdf(report, { baseUrl = '/' } = {}) {
 
   for (const sec of report.sections) {
     const n = sec.columns.length;
-    const wideW = Math.min(150, usable * 0.26);
-    const otherW = (usable - wideW) / (n - 1);
-    const widths = sec.columns.map((c) => (c.wide ? wideW : otherW));
+    // Har column ki chaudai uske hisse (w) ke hisab se; "wide" column = 3 hissa (max 150pt)
+    const weights = sec.columns.map((c) => c.w || (c.wide ? Math.min(3, (n - 1) * 0.42) : 1));
+    const sumW = weights.reduce((a, b) => a + b, 0);
+    const widths = weights.map((w) => (usable * w) / sumW);
 
     const HEAD_H = 26;
     const drawHeader = () => {
@@ -180,7 +182,7 @@ export async function reportToPdf(report, { baseUrl = '/' } = {}) {
     drawHeader();
     sec.rows.forEach((r, i) => drawRow(r, { shade: i % 2 === 1 }));
     if (!sec.rows.length) {
-      draw('Koi data nahi', M + 3, y - 10, FS, { color: grey });
+      draw(t('c.noData'), M + 3, y - 10, FS, { color: grey });
       y -= ROW_H;
     }
     if (sec.total) drawRow(sec.total, { total: true });
@@ -189,7 +191,7 @@ export async function reportToPdf(report, { baseUrl = '/' } = {}) {
 
   pages.forEach((p, i) => {
     page = p;
-    draw(`${COMPANY} · Page ${i + 1}/${pages.length}`, M, 16, 8, { color: grey });
+    draw(`${COMPANY} · ${t('rep.page', { i: i + 1, n: pages.length })}`, M, 16, 8, { color: grey });
   });
 
   return new Blob([await doc.save()], { type: 'application/pdf' });

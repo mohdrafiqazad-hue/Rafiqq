@@ -4,6 +4,7 @@ import { addDays, addMonths, fmtDateLong, fmtMonth, today } from '../lib/dates.j
 import { fmtCell } from '../lib/reports.js';
 import { useUI } from './ui.jsx';
 import { canShareFiles, downloadFile, FORMATS, makeFile, shareFile } from '../export/index.js';
+import { t } from '../i18n/index.js';
 
 export function DateBar({ date, onChange }) {
   const ref = useRef(null);
@@ -18,10 +19,10 @@ export function DateBar({ date, onChange }) {
   };
   return (
     <div className="datebar">
-      <button className="nav-btn" onClick={() => onChange(addDays(date, -1))} aria-label="Pichla din">‹</button>
+      <button className="nav-btn" onClick={() => onChange(addDays(date, -1))} aria-label={t('d.prevDay')}>‹</button>
       <button className="datebar-label" onClick={open}>
         <span>📅 {fmtDateLong(date)}</span>
-        {date === today() ? <small className="pill pill-green">Aaj</small> : null}
+        {date === today() ? <small className="pill pill-green">{t('c.today')}</small> : null}
         <input
           ref={ref}
           type="date"
@@ -29,12 +30,12 @@ export function DateBar({ date, onChange }) {
           value={date}
           onChange={(e) => e.target.value && onChange(e.target.value)}
           tabIndex={-1}
-          aria-label="Date chunein"
+          aria-label={t('d.pickDate')}
         />
       </button>
-      <button className="nav-btn" onClick={() => onChange(addDays(date, 1))} aria-label="Agla din">›</button>
+      <button className="nav-btn" onClick={() => onChange(addDays(date, 1))} aria-label={t('d.nextDay')}>›</button>
       {date !== today() && (
-        <button className="today-btn" onClick={() => onChange(today())}>Aaj</button>
+        <button className="today-btn" onClick={() => onChange(today())}>{t('c.today')}</button>
       )}
     </div>
   );
@@ -43,12 +44,12 @@ export function DateBar({ date, onChange }) {
 export function MonthBar({ ym, onChange }) {
   return (
     <div className="datebar">
-      <button className="nav-btn" onClick={() => onChange(addMonths(ym, -1))} aria-label="Pichla mahina">‹</button>
+      <button className="nav-btn" onClick={() => onChange(addMonths(ym, -1))} aria-label={t('d.prevMonth')}>‹</button>
       <label className="datebar-label">
         <span>🗓️ {fmtMonth(ym)}</span>
-        <input type="month" className="hidden-date" value={ym} onChange={(e) => e.target.value && onChange(e.target.value)} aria-label="Mahina chunein" />
+        <input type="month" className="hidden-date" value={ym} onChange={(e) => e.target.value && onChange(e.target.value)} aria-label={t('d.pickMonth')} />
       </label>
-      <button className="nav-btn" onClick={() => onChange(addMonths(ym, 1))} aria-label="Agla mahina">›</button>
+      <button className="nav-btn" onClick={() => onChange(addMonths(ym, 1))} aria-label={t('d.nextMonth')}>›</button>
     </div>
   );
 }
@@ -56,9 +57,9 @@ export function MonthBar({ ym, onChange }) {
 export function YearBar({ year, onChange }) {
   return (
     <div className="datebar">
-      <button className="nav-btn" onClick={() => onChange(year - 1)} aria-label="Pichla saal">‹</button>
-      <div className="datebar-label"><span>Saal {year}</span></div>
-      <button className="nav-btn" onClick={() => onChange(year + 1)} aria-label="Agla saal">›</button>
+      <button className="nav-btn" onClick={() => onChange(year - 1)} aria-label={t('d.prevYear')}>‹</button>
+      <div className="datebar-label"><span>{t('c.year', { y: year })}</span></div>
+      <button className="nav-btn" onClick={() => onChange(year + 1)} aria-label={t('d.nextYear')}>›</button>
     </div>
   );
 }
@@ -95,7 +96,7 @@ export function NumField({ label, value, onChange, decimal = false, allowNegativ
             type="button"
             className={`sign-btn ${neg ? 'neg' : ''}`}
             onClick={() => onChange(neg ? String(value).slice(1) : `-${value}`)}
-            aria-label="Plus/minus badlein"
+            aria-label={t('l.signToggle')}
           >
             {neg ? '−' : '+'}
           </button>
@@ -145,7 +146,7 @@ export function ReportTable({ section }) {
               </tr>
             ))}
             {!section.rows.length && (
-              <tr><td colSpan={section.columns.length} className="muted">Koi data nahi</td></tr>
+              <tr><td colSpan={section.columns.length} className="muted">{t('c.noData')}</td></tr>
             )}
           </tbody>
           {section.total && (
@@ -177,10 +178,10 @@ export function DownloadBar({ getReport }) {
       if (share) await shareFile(file, report.title);
       else {
         downloadFile(file);
-        toast(`${FORMATS[format].label} file download ho gayi ✓`);
+        toast(t('rep.downloaded', { f: FORMATS[format].label }));
       }
     } catch (e) {
-      toast(`File nahi bani: ${e?.message || e}`, 'err', 6000);
+      toast(t('rep.fileErr', { e: e?.message || e }), 'err', 6000);
     } finally {
       setBusy('');
     }
@@ -197,7 +198,7 @@ export function DownloadBar({ getReport }) {
       </div>
       {canShare && (
         <button className="btn btn-wa" disabled={!!busy} onClick={() => go('pdf', true)}>
-          {busy === 'pdfs' ? '…' : '📤'} PDF share karein (WhatsApp)
+          {busy === 'pdfs' ? '…' : t('rep.share')}
         </button>
       )}
     </div>

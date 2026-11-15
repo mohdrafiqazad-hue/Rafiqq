@@ -65,6 +65,29 @@ describe('planImport / mergeData', () => {
     expect(merged.entries.find((e) => e.l === 'L1' && e.d === '2026-10-01').t).toBe(11);
     expect(merged.labours.find((l) => l.id === 'L1').name).toBe('राम');
   });
+  it('kharche aur category bhi aate hain', () => {
+    const b = buildBackup({
+      rate: 10, labours: [], entries: [],
+      expenses: [{ id: 'x1', d: '2026-11-01', c: 'diesel', a: 1500, p: 'Pump', n: '' }, { id: 'x2', d: '2026-11-02', c: 'c_b', a: 0 }],
+      xcats: [{ id: 'c_b', name: 'Bottle' }],
+    });
+    const back = parseBackup(JSON.stringify(b));
+    expect(back.expenses).toEqual([{ id: 'x1', d: '2026-11-01', c: 'diesel', a: 1500, p: 'Pump', n: '' }]);
+    expect(back.skipped).toBe(1);
+    expect(back.xcats).toEqual([{ id: 'c_b', name: 'Bottle' }]);
+    const plan = planImport({ labours: [], entries: [], expenses: [{ id: 'x1' }] }, back);
+    expect(plan).toMatchObject({ expenseCount: 1, newExpenses: 0, replacedExpenses: 1 });
+    const merged = mergeData({ labours: [], entries: [], expenses: [{ id: 'x9', d: '2026-01-01', c: 'other', a: 5 }] }, back);
+    expect(merged.expenses.map((x) => x.id).sort()).toEqual(['x1', 'x9']);
+  });
+  it('purani file (bina kharche) bhi chale', () => {
+    const back = parseBackup(JSON.stringify(file));
+    expect(back.expenses).toEqual([]);
+    expect(back.xcats).toEqual([]);
+  });
+  it('galti ka code', () => {
+    try { parseBackup('x'); } catch (e) { expect(e.code).toBe('bk.notjson'); }
+  });
   it('backup -> parse -> wahi data', () => {
     const b = buildBackup({
       rate: 12,

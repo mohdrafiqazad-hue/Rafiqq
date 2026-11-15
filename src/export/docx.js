@@ -5,6 +5,7 @@ import {
 } from 'docx';
 import { COMPANY, fmtCell } from '../lib/reports.js';
 import { fmtDateTime } from '../lib/dates.js';
+import { t } from '../i18n/index.js';
 
 // Hindi ke liye "cs" (complex script) font; Word phone/computer me jo Hindi font ho use le leta hai
 const FONT = { ascii: 'Calibri', hAnsi: 'Calibri', cs: 'Nirmala UI', eastAsia: 'Calibri' };
@@ -17,7 +18,7 @@ export async function reportToDocx(report) {
     new Paragraph({ children: [run(report.title, { bold: true, size: 26 })], spacing: { before: 80 } }),
   ];
   if (report.subtitle) children.push(new Paragraph({ children: [run(report.subtitle, { color: '666666' })] }));
-  children.push(new Paragraph({ children: [run(`Banaya: ${fmtDateTime()}`, { color: '666666' })], spacing: { after: 200 } }));
+  children.push(new Paragraph({ children: [run(t('rep.generated', { dt: fmtDateTime() }), { color: '666666' })], spacing: { after: 200 } }));
 
   for (const sec of report.sections) {
     if (sec.heading) {
@@ -44,7 +45,7 @@ export async function reportToDocx(report) {
     const rows = [mkRow(sec.columns.map((c) => c.label), { header: true }), ...sec.rows.map((r) => mkRow(r))];
     if (sec.total) rows.push(mkRow(sec.total, { total: true }));
     children.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
-    if (!sec.rows.length) children.push(new Paragraph({ children: [run('Koi data nahi', { color: '666666' })] }));
+    if (!sec.rows.length) children.push(new Paragraph({ children: [run(t('c.noData'), { color: '666666' })] }));
   }
 
   const doc = new Document({

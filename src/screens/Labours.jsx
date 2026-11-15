@@ -5,6 +5,7 @@ import { balanceAt, fmtRs } from '../lib/calc.js';
 import { today } from '../lib/dates.js';
 import Khata from './Khata.jsx';
 import Settings from './Settings.jsx';
+import { t } from '../i18n/index.js';
 
 export function LabourForm({ initial, onSave, onClose, title }) {
   const [name, setName] = useState(initial?.name || '');
@@ -14,50 +15,49 @@ export function LabourForm({ initial, onSave, onClose, title }) {
     e.preventDefault();
     const n = name.trim();
     const p = phone.replace(/[^\d+]/g, '');
-    if (!n) return setErr('Naam likhna zaroori hai.');
-    if (p && p.replace(/\D/g, '').length < 10) return setErr('Phone number 10 ank ka hona chahiye (ya khaali chhod dein).');
+    if (!n) return setErr(t('l.errName'));
+    if (p && p.replace(/\D/g, '').length < 10) return setErr(t('l.errPhone'));
     onSave(n, p);
   };
   return (
     <Sheet title={title} onClose={onClose}>
       <form onSubmit={submit} className="form">
         <label className="field">
-          <span>Naam *</span>
-          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Jaise: Ramesh / रमेश" maxLength={60} />
+          <span>{t('l.name')}</span>
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={t('l.namePh')} maxLength={60} />
         </label>
         <label className="field">
-          <span>Phone (WhatsApp ke liye, optional)</span>
+          <span>{t('l.phone')}</span>
           <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" type="tel" placeholder="98765 43210" maxLength={16} />
         </label>
         {err && <div className="error-box">{err}</div>}
-        <button className="btn btn-primary btn-big full" type="submit">✓ Save</button>
+        <button className="btn btn-primary btn-big full" type="submit">{t('c.save')}</button>
       </form>
     </Sheet>
   );
 }
 
-export default function Labours({ khataId, setKhataId }) {
+export default function Labours({ khataId, setKhataId, showSettings, setShowSettings }) {
   const D = useData();
   const { confirm } = useUI();
   const [adding, setAdding] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   const khataLabour = khataId ? D.labourById.get(khataId) : null;
   if (khataLabour) return <Khata labour={khataLabour} onBack={() => setKhataId(null)} />;
   if (showSettings) return <Settings onBack={() => setShowSettings(false)} />;
 
-  const t = today();
+  const td = today();
   const card = (l) => {
-    const b = balanceAt(l, D.byLabour.get(l.id) || [], t);
+    const b = balanceAt(l, D.byLabour.get(l.id) || [], td);
     return (
       <button key={l.id} className="card labour-card" onClick={() => setKhataId(l.id)}>
         <div>
           <div className="labour-name">{l.name}</div>
-          <div className="muted small">{l.phone || 'Phone nahi'}</div>
+          <div className="muted small">{l.phone || t('l.noPhone')}</div>
         </div>
         <div className="labour-bal">
-          <div><b>{b.c}</b> cooler</div>
+          <div><b>{b.c}</b> {t('c.cooler')}</div>
           <div className={b.m < 0 ? 'neg' : ''}><b>{fmtRs(b.m)}</b></div>
         </div>
         <span className="chev">›</span>
@@ -70,17 +70,17 @@ export default function Labours({ khataId, setKhataId }) {
   return (
     <div className="screen">
       <div className="row-actions">
-        <button className="btn btn-primary btn-big grow" onClick={() => setAdding(true)}>+ Naya labour</button>
-        <button className="btn btn-big" onClick={() => setShowSettings(true)} aria-label="Settings">⚙️ Settings</button>
+        <button className="btn btn-primary btn-big grow" onClick={() => setAdding(true)}>{t('l.new')}</button>
+        <button className="btn btn-big" onClick={() => setShowSettings(true)} aria-label={t('s.title')}>{t('l.settings')}</button>
       </div>
 
-      {!D.active.length && <div className="empty-card">Abhi koi labour nahi. "+ Naya labour" dabayein.</div>}
+      {!D.active.length && <div className="empty-card">{t('l.empty')}</div>}
       {D.active.map(card)}
 
       {archived.length > 0 && (
         <>
           <button className="link-btn archived-toggle" onClick={() => setShowArchived((s) => !s)}>
-            {showArchived ? '▾' : '▸'} Hataye gaye labour ({archived.length})
+            {showArchived ? '▾' : '▸'} {t('l.archived', { n: archived.length })}
           </button>
           {showArchived && archived.map((l) => (
             <div key={l.id} className="archived-row">
@@ -88,12 +88,12 @@ export default function Labours({ khataId, setKhataId }) {
               <button
                 className="btn btn-small"
                 onClick={async () => {
-                  if (await confirm({ title: 'Wapis laayein?', message: `${l.name} ko phir se list me laayein?`, okText: 'Haan' })) {
-                    D.saveLabour({ ...l, archived: false }, `${l.name} wapis aa gaya ✓`);
+                  if (await confirm({ title: t('l.restoreTitle'), message: t('l.restoreMsg', { name: l.name }), okText: t('c.yes') })) {
+                    D.saveLabour({ ...l, archived: false }, t('l.restored', { name: l.name }));
                   }
                 }}
               >
-                Wapis laayein
+                {t('l.restore')}
               </button>
             </div>
           ))}
@@ -102,7 +102,7 @@ export default function Labours({ khataId, setKhataId }) {
 
       {adding && (
         <LabourForm
-          title="Naya labour"
+          title={t('l.formNew')}
           onClose={() => setAdding(false)}
           onSave={(name, phone) => {
             D.addLabour(name, phone);
