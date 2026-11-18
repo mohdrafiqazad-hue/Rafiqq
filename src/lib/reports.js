@@ -4,7 +4,7 @@
 // Saare words chuni hui bhasha (t()) me aate hain.
 
 import { dayReport, periodReport, yearByMonth, ledger, money } from './calc.js';
-import { fmtDate, fmtDateLong, fmtMonth, monthStart, monthEnd } from './dates.js';
+import { addDays, fmtDate, fmtDateLong, fmtDayShort, fmtMonth, fmtWeek, monthStart, monthEnd, weekEnd } from './dates.js';
 import { t } from '../i18n/index.js';
 import { catName, expenseSummary } from './expenses.js';
 
@@ -68,6 +68,33 @@ export function buildMonthReport(labours, entries, ym) {
   };
 }
 
+/** Hafte ki report: labour-wise + din-wise (Somvar se Ravivar) */
+export function buildWeekReport(labours, entries, ws) {
+  const we = weekEnd(ws);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(ws, i);
+    days.push({ d, ...periodReport(labours, entries, d, d).totals });
+  }
+  const sum = (k) => days.reduce((s, r) => money(s + r[k]), 0);
+  const last = days[days.length - 1];
+  return {
+    kind: 'hafta',
+    title: t('rep.weekTitle', { label: fmtWeek(ws) }),
+    subtitle: t('rep.weekSub'),
+    file: `Hafta_${ws}`,
+    sections: [
+      labourPeriodSection(labours, entries, ws, we, t('rep.labourWise')),
+      {
+        heading: t('rep.dayWise'),
+        columns: [wideCol('day', t('col.date')), ...activityCols()],
+        rows: days.map((r) => [fmtDayShort(r.d), r.t, r.r, r.p, r.bane, r.m, r.c, r.baaki]),
+        total: [t('c.total'), sum('t'), sum('r'), sum('p'), sum('bane'), sum('m'), last.c, last.baaki],
+      },
+    ],
+  };
+}
+
 export function buildYearReport(labours, entries, year, expenses = []) {
   const y = yearByMonth(labours, entries, year);
   const xByMonth = new Map();
@@ -96,12 +123,14 @@ export function buildYearReport(labours, entries, year, expenses = []) {
 
 /** period: { mode: 'mahina'|'saal'|'poora', ym?, year? } */
 export function periodRange(period) {
+  if (period.mode === 'hafta') return { from: period.ws, to: weekEnd(period.ws), label: fmtWeek(period.ws) };
   if (period.mode === 'mahina') return { from: monthStart(period.ym), to: monthEnd(period.ym), label: fmtMonth(period.ym) };
   if (period.mode === 'saal') return { from: `${period.year}-01-01`, to: `${period.year}-12-31`, label: String(period.year) };
   return { from: null, to: null, label: t('rep.fullHisab') };
 }
 
-const periodFile = (period) => (period.mode === 'mahina' ? period.ym : period.mode === 'saal' ? period.year : 'poora');
+const periodFile = (period) => (period.mode === 'hafta' ? `hafta_${period.ws}`
+  : period.mode === 'mahina' ? period.ym : period.mode === 'saal' ? period.year : 'poora');
 
 export function buildLabourReport(labour, entries, period) {
   const { from, to, label } = periodRange(period);

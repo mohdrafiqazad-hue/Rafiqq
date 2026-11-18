@@ -181,3 +181,37 @@ describe('ledger (Labour khata)', () => {
     }
   });
 });
+
+import { weekStart, weekEnd, addWeeks, fmtWeek } from './dates.js';
+import { buildWeekReport, periodRange } from './reports.js';
+
+describe('hafta (week)', () => {
+  it('Somvar se Ravivar', () => {
+    expect(weekStart('2026-11-18')).toBe('2026-11-16'); // Budhvar -> Somvar
+    expect(weekStart('2026-11-16')).toBe('2026-11-16'); // Somvar
+    expect(weekStart('2026-11-22')).toBe('2026-11-16'); // Ravivar -> pichla Somvar
+    expect(weekEnd('2026-11-16')).toBe('2026-11-22');
+    expect(addWeeks('2026-11-16', -1)).toBe('2026-11-09');
+    expect(weekStart('2027-01-01')).toBe('2026-12-28');
+  });
+  it('label', () => {
+    expect(fmtWeek('2026-11-16')).toBe('16 Nov – 22 Nov 2026');
+    expect(fmtWeek('2026-12-28')).toBe('28 Dec 2026 – 3 Jan 2027');
+  });
+  it('periodRange hafta', () => {
+    expect(periodRange({ mode: 'hafta', ws: '2026-10-26' })).toMatchObject({ from: '2026-10-26', to: '2026-11-01' });
+  });
+  it('hafta report: labour-wise aur din-wise ka total mile', () => {
+    // 26 Oct - 1 Nov 2026: B ki 30 Oct entry; 1 Nov ko A aur B dono ki entry
+    const r = buildWeekReport(labours, entries, '2026-10-26');
+    const [lab, days] = r.sections;
+    expect(days.rows).toHaveLength(7);
+    expect(days.rows[0][0]).toBe('Somvar, 26 Oct');
+    expect(days.rows[6][0]).toBe('Ravivar, 1 Nov');
+    expect(lab.total[2]).toBe(130); // le gaye: 100 + 20 + 10
+    expect(days.total.slice(1, 6)).toEqual([130, 8, 118, 1180, 150]);
+    // baaki (hafte ke aakhir tak) dono table me same
+    expect(days.total.slice(6)).toEqual(lab.total.slice(7));
+    expect(days.total.slice(6)).toEqual([27, 230]); // A: 15/20, B: 12/210
+  });
+});

@@ -48,6 +48,20 @@ export function addMonths(ym, n) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 }
 
+/** Hafta Somvar se shuru: kisi bhi date ke hafte ka Somvar */
+export function weekStart(iso) {
+  const day = fromISO(iso).getDay(); // 0 = Ravivar
+  return addDays(iso, day === 0 ? -6 : 1 - day);
+}
+
+export function weekEnd(ws) {
+  return addDays(ws, 6);
+}
+
+export function addWeeks(ws, n) {
+  return addDays(ws, 7 * n);
+}
+
 const MONTHS = {
   hl: ['Janvari', 'Farvari', 'March', 'April', 'Mai', 'June', 'July', 'August', 'Sitambar', 'Aktubar', 'Navambar', 'Disambar'],
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
@@ -95,10 +109,26 @@ export function fmtDateLong(iso) {
   return `${DAYS[getLang()][fromISO(iso).getDay()]}, ${fmtDate(iso)}`;
 }
 
+/** "Somvar, 9 Nov" (bina saal) */
+export function fmtDayShort(iso) {
+  const [, m, d] = iso.split('-').map(Number);
+  return `${DAYS[getLang()][fromISO(iso).getDay()]}, ${d} ${MONTHS_SHORT[getLang()][m - 1]}`;
+}
+
 /** "Navambar 2026" */
 export function fmtMonth(ym) {
   const [y, m] = ym.split('-').map(Number);
   return `${MONTHS[getLang()][m - 1]} ${y}`;
+}
+
+/** "16 Nov – 22 Nov 2026" (saal badle to dono taraf saal) */
+export function fmtWeek(ws) {
+  const we = weekEnd(ws);
+  const [y1, m1, d1] = ws.split('-').map(Number);
+  const [y2] = we.split('-').map(Number);
+  const short = MONTHS_SHORT[getLang()];
+  const left = y1 === y2 ? `${d1} ${short[m1 - 1]}` : fmtDate(ws);
+  return `${left} – ${fmtDate(we)}`;
 }
 
 export function fmtDateTime(d = new Date()) {

@@ -191,7 +191,7 @@ label.datebar-label .hidden-date { pointer-events: auto; }
 .rtable th, .rtable td { padding: 9px 8px; border-bottom: 1px solid #eef1f4; white-space: nowrap; text-align: left; }
 .rtable th { background: var(--brand-soft); font-size: 12px; color: var(--brand-dark); position: sticky; top: 0; }
 .rtable .num { text-align: right; }
-.rtable th:first-child, .rtable td:first-child { position: sticky; left: 0; background: #fff; z-index: 1; max-width: 140px; overflow: hidden; text-overflow: ellipsis; box-shadow: 1px 0 0 #eef1f4; }
+.rtable th:first-child, .rtable td:first-child { position: sticky; left: 0; background: #fff; z-index: 1; max-width: 160px; overflow: hidden; text-overflow: ellipsis; box-shadow: 1px 0 0 #eef1f4; }
 .rtable th:first-child { background: var(--brand-soft); z-index: 2; }
 .rtable tbody tr:nth-child(even) td { background: #fafbfc; }
 .rtable tfoot td { font-weight: 800; background: #f1f1ea !important; border-top: 2px solid #d9d9cc; }

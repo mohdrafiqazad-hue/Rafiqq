@@ -1,6 +1,6 @@
 // Chhote, baar-baar kaam aane wale components
 import { useRef, useState } from 'react';
-import { addDays, addMonths, fmtDateLong, fmtMonth, monthGrid, today, weekdayNames } from '../lib/dates.js';
+import { addDays, addMonths, addWeeks, fmtDateLong, fmtMonth, fmtWeek, monthGrid, today, weekStart, weekdayNames } from '../lib/dates.js';
 import { fmtCell } from '../lib/reports.js';
 import { useUI } from './ui.jsx';
 import { canShareFiles, downloadFile, FORMATS, makeFile, shareFile } from '../export/index.js';
@@ -79,6 +79,22 @@ export function MonthCalendar({ date, onPick, marks }) {
         <span><i className="lg full" /> {t('cal.full')}</span>
         <span><i className="lg part" /> {t('cal.part')}</span>
       </div>
+    </div>
+  );
+}
+
+/** Hafta chunne ki patti: ‹ 16 Nov – 22 Nov 2026 ›, beech me tap karke koi bhi date (uska hafta) */
+export function WeekBar({ ws, onChange }) {
+  const thisWeek = weekStart(today());
+  return (
+    <div className="datebar">
+      <button className="nav-btn" onClick={() => onChange(addWeeks(ws, -1))} aria-label={t('d.prevWeek')}>‹</button>
+      <label className="datebar-label">
+        <span>🗓️ {fmtWeek(ws)}</span>
+        <input type="date" className="hidden-date" value={ws} onChange={(e) => e.target.value && onChange(weekStart(e.target.value))} aria-label={t('d.pickWeek')} />
+      </label>
+      <button className="nav-btn" onClick={() => onChange(addWeeks(ws, 1))} aria-label={t('d.nextWeek')}>›</button>
+      {ws !== thisWeek && <button className="today-btn" onClick={() => onChange(thisWeek)}>{t('c.today')}</button>}
     </div>
   );
 }
