@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../data/DataContext.jsx';
 import { useUI } from '../components/ui.jsx';
 import { DateBar, MonthCalendar, NumField } from '../components/common.jsx';
-import VoiceEntry from '../components/VoiceEntry.jsx';
 import { balanceBefore, fmtRs, nextPendingLabour, parchi } from '../lib/calc.js';
 import { addDays, fmtDate } from '../lib/dates.js';
 import { t } from '../i18n/index.js';
@@ -16,7 +15,6 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
   const [form, setForm] = useState(EMPTY);
   const firstRef = useRef(null);
   const focusNext = useRef(false);
-  const pendingVoice = useRef(null); // awaz se aaye number, labour badalne ke baad bharne ke liye
 
   // Calendar: kis din sab ki entry hui (hara), kis din kuch baaki (narangi)
   const [showCal, setShowCal] = useState(() => {
@@ -58,12 +56,7 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
 
   // Labour ya date badle to form bharo
   useEffect(() => {
-    let f = toForm(existing);
-    if (pendingVoice.current && pendingVoice.current.labourId === labourId) {
-      f = { ...f, ...pendingVoice.current.values };
-      pendingVoice.current = null;
-    }
-    setForm(f);
+    setForm(toForm(existing));
     if (focusNext.current) {
       focusNext.current = false;
       setTimeout(() => firstRef.current?.focus(), 50);
@@ -92,20 +85,6 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
   const anyValue = ['t', 'r', 'p', 'm'].some((k) => form[k] !== '' && Number(form[k]) !== 0);
 
   const locked = !!existing && !D.can.editEntry; // purani entry: sirf malik badal sakta hai
-
-  /** Awaz se: sahi labour chuno aur sirf bole gaye khane bharo */
-  const onVoice = ({ labourId: id, values }) => {
-    if (D.getEntry(id, date) && !D.can.editEntry) {
-      setLabourId(id);
-      toast(t('v.locked'), 'warn', 5000);
-      return;
-    }
-    if (id === labourId) setForm((f) => ({ ...f, ...values }));
-    else {
-      pendingVoice.current = { labourId: id, values };
-      setLabourId(id);
-    }
-  };
 
   const save = async () => {
     if (!labour || locked) return;
@@ -183,8 +162,6 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
       <div className="chips-info muted">
         {t('e.progress', { done: doneIds.size, total: D.active.length })}
       </div>
-
-      <VoiceEntry labours={chips} currentId={labourId} onApply={onVoice} />
 
       {labour && (
         <div className="card entry-card">

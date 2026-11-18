@@ -392,28 +392,6 @@ export const STRINGS = {
   'pm.ownerOnly': ['Sirf malik badal sakte hain', 'Only the owner can change this', 'सिर्फ़ मालिक बदल सकते हैं'],
   'x.view': ['Kharcha', 'Expense', 'खर्चा'],
 
-  // ---------- Bol kar entry (voice) ----------
-  'v.start': ['Bol kar bharein', 'Speak to fill', 'बोलकर भरें'],
-  'v.listening': ['Sun raha hai… (rokne ke liye dabayein)', 'Listening… (tap to stop)', 'सुन रहा है… (रोकने के लिए दबाएँ)'],
-  'v.speakNow': ['Ab boliye…', 'Speak now…', 'अब बोलिए…'],
-  'v.lang': ['Bolne ki bhasha', 'Speaking language', 'बोलने की भाषा'],
-  'v.example': ['Jaise bolein: "Naseem 15 15 30 le gaya, 50 lage, 10 wapis aaye, 500 rupaye diye". Ya sirf: "Naseem 60 10 50 500" (le gaye, wapis, lage, paisa).', 'Say for example: "Naseem took 60, returned 10, placed 50, paid 500". Or just: "Naseem 60 10 50 500" (taken, returned, installed, money).', 'ऐसे बोलें: "नसीम 15 15 30 ले गया, 50 लगे, 10 वापस आए, 500 रुपये दिए"। या सिर्फ़: "नसीम 60 10 50 500" (ले गए, वापस, लगे, पैसा)।'],
-  'v.heard': ['Suna', 'Heard', 'सुना'],
-  'v.noName': ['Labour ka naam nahi mila', 'Labour name not found', 'लेबर का नाम नहीं मिला'],
-  'v.selected': ['chuna hua', 'selected', 'चुना हुआ'],
-  'v.pickName': ['Naam samajh nahi aaya. Upar se labour chunein aur dobara bolein.', 'Could not understand the name. Pick the labour above and speak again.', 'नाम समझ नहीं आया। ऊपर से लेबर चुनें और दोबारा बोलें।'],
-  'v.leftover': ['Ye number kis khane ke hain samajh nahi aaya: {n}. Khud sahi khane me likh dein.', 'Could not tell which box these numbers belong to: {n}. Please type them yourself.', 'ये नंबर किस खाने के हैं समझ नहीं आया: {n}। खुद सही खाने में लिख दें।'],
-  'v.check': ['Form me bhar diya. Neeche parchi dekh kar "Save" dabayein.', 'Filled in the form. Check the slip below and tap "Save".', 'फ़ॉर्म में भर दिया। नीचे पर्ची देखकर "सेव" दबाएँ।'],
-  'v.errPerm': ['Mic ki permission nahi mili. Phone ki Settings me is app/Chrome ko Microphone ki permission dein.', 'Microphone permission was denied. Allow microphone for this app/Chrome in phone Settings.', 'माइक की अनुमति नहीं मिली। फ़ोन की सेटिंग्स में इस ऐप/Chrome को माइक्रोफ़ोन की अनुमति दें।'],
-  'v.errNoSpeech': ['Kuch suna nahi. Mic dabakar dobara bolein.', 'Did not hear anything. Tap the mic and speak again.', 'कुछ सुना नहीं। माइक दबाकर दोबारा बोलें।'],
-  'v.errNet': ['Bol kar entry ke liye internet chahiye. Abhi haath se bhar dein.', 'Voice entry needs internet. Please type it for now.', 'बोलकर एंट्री के लिए इंटरनेट चाहिए। अभी हाथ से भर दें।'],
-  'v.errMic': ['Mic nahi mila.', 'No microphone found.', 'माइक नहीं मिला।'],
-  'v.errLang': ['Ye bhasha is phone me nahi chalti. Doosri bhasha chunein.', 'This language is not supported on this phone. Pick another.', 'ये भाषा इस फ़ोन में नहीं चलती। दूसरी भाषा चुनें।'],
-  'v.errOther': ['Awaz se entry nahi hui ({code}). Dobara try karein.', 'Voice entry failed ({code}). Please try again.', 'आवाज़ से एंट्री नहीं हुई ({code})। दोबारा कोशिश करें।'],
-  'v.errNothing': ['Number samajh nahi aaye. Dheere aur saaf bolein, jaise "60 le gaya".', 'Could not understand the numbers. Speak slowly, e.g. "took 60".', 'नंबर समझ नहीं आए। धीरे और साफ़ बोलें, जैसे "60 ले गया"।'],
-  'v.notSupported': ['Is phone/browser me bol kar entry nahi chalti. Chrome update karein.', 'Voice entry is not available in this browser. Update Chrome.', 'इस फ़ोन/ब्राउज़र में बोलकर एंट्री नहीं चलती। Chrome अपडेट करें।'],
-  'v.locked': ['Is labour ki is din ki entry save ho chuki hai, sirf malik badal sakte hain.', 'This entry is already saved; only the owner can change it.', 'इस लेबर की इस दिन की एंट्री सेव हो चुकी है, सिर्फ़ मालिक बदल सकते हैं।'],
-
   // ---------- Calendar ----------
   'cal.show': ['📅 Calendar dikhayein', '📅 Show calendar', '📅 कैलेंडर दिखाएँ'],
   'cal.hide': ['Calendar chhupayein', 'Hide calendar', 'कैलेंडर छुपाएँ'],
