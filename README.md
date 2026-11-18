@@ -13,6 +13,11 @@ Water cooler business ka roz ka hisab rakhne wala mobile app (PWA). Ye phone par
 | **Kharcha** | Company ke kharche: Diesel, Gaadi service/repair, Salary, Driver ka paisa, Plant/machine, Bijli bill, Kiraya, Anya, aur apni nayi category bhi bana sakte hain. Har kharche me date, rakam, kisko diya aur note. Mahina/Saal/Poora ka category-wise total, aur **Bachat = labour se mila − kharcha**. PDF/Word/Excel report bhi. |
 | **Labour** | Labour jodna, naam/phone badalna, list se hatana, har labour ka khata, aur "WhatsApp pe hisab bhejein" button. ⚙️ **Settings** me: **bhasha (Hinglish / English / हिंदी)**, rate, backup, restore/purana data, logout. |
 
+**🎤 Bol kar entry:** Entry screen par "Bol kar bharein" dabakar poori line bolein, jaise
+"Naseem 15 15 30 le gaya, 50 lage, 10 wapis aaye, 500 rupaye diye" (ya Hindi / English / ਪੰਜਾਬੀ me). App labour chun kar
+form bhar deta hai (15+15+30 = 60 khud jodta hai); parchi dekh kar **Save** aap dabate hain. Bolne ki bhasha mic ke paas chunein
+(हिंदी/Hinglish, English, ਪੰਜਾਬੀ). Iske liye internet chahiye (Chrome ka speech system). Haath se bharna bhi pehle jaisa chalta hai.
+
 **Bhasha:** Login screen par ya Settings me Hinglish, English ya हिंदी chunein. Poora app, WhatsApp message aur PDF/Word/Excel reports usi bhasha me bante hain. Ye choice har phone par alag yaad rehti hai.
 
 ### Kaun kya kar sakta hai (login aur permission)

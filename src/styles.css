@@ -332,3 +332,16 @@ label.datebar-label .hidden-date { pointer-events: auto; }
 .cal-legend .lg { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -2px; }
 .lg.full { background: #bfe6cb; }
 .lg.part { background: #ffd9a8; }
+
+/* ---------- Bol kar entry ---------- */
+.voice { background: #fff; border: 1px solid #e6ebef; border-radius: var(--radius); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.voice-row { display: flex; gap: 8px; }
+.voice-btn { flex: 1; min-height: 52px; font-size: 17px; background: #eef7fb; border-color: #b9dcea; color: var(--brand-dark); }
+.voice-btn.on { background: #c62828; border-color: #c62828; color: #fff; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(198,40,40,.45); } 50% { box-shadow: 0 0 0 8px rgba(198,40,40,0); } }
+.voice-lang { width: 132px; min-height: 52px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; padding: 0 6px; font-weight: 600; font-size: 14px; }
+.voice-live { background: #fff6f6; border: 1px dashed #e7a3a3; border-radius: 10px; padding: 10px; font-size: 16px; min-height: 44px; }
+.voice-hint { margin: 0; }
+.voice-result { display: flex; flex-direction: column; gap: 6px; }
+.voice-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.voice-na { margin: 0; }
