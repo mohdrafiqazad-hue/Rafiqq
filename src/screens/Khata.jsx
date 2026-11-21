@@ -9,6 +9,7 @@ import { openWhatsApp, khataText, waNumber } from '../lib/whatsapp.js';
 import { LabourForm } from './Labours.jsx';
 import { PeriodPicker, defaultPeriod } from './Report.jsx';
 import { t } from '../i18n/index.js';
+import { ln } from '../lib/translit.js';
 
 function OpeningForm({ labour, onSave, onRemove, onClose, hasEntriesBefore }) {
   const [d, setD] = useState(labour.ob?.d || today());
@@ -71,13 +72,13 @@ export default function Khata({ labour, onBack, initialPeriod }) {
 
   const archive = async () => {
     const ok = await confirm({
-      title: t('l.archiveTitle', { name: labour.name }),
+      title: t('l.archiveTitle', { name: ln(labour) }),
       message: t('l.archiveMsg'),
       okText: t('l.archiveOk'),
       danger: true,
     });
     if (ok) {
-      D.saveLabour({ ...labour, archived: true }, t('l.archived1', { name: labour.name }));
+      D.saveLabour({ ...labour, archived: true }, t('l.archived1', { name: ln(labour) }));
       back();
     }
   };
@@ -86,7 +87,7 @@ export default function Khata({ labour, onBack, initialPeriod }) {
     <div className="screen">
       <div className="subhead">
         <button className="btn btn-small" onClick={back}>{t('c.back')}</button>
-        <div className="subhead-title">{labour.name}{labour.archived ? t('c.archivedSuffix') : ''}</div>
+        <div className="subhead-title">{ln(labour)}{labour.archived ? t('c.archivedSuffix') : ''}</div>
       </div>
 
       <div className="card">
@@ -102,7 +103,7 @@ export default function Khata({ labour, onBack, initialPeriod }) {
           <button className="btn btn-small" onClick={() => setEditing(true)}>{t('l.editBtn')}</button>
           <button className="btn btn-small" onClick={() => setOpening(true)}>{t('l.obBtn')}</button>
           {labour.archived ? (
-            <button className="btn btn-small" onClick={() => D.saveLabour({ ...labour, archived: false }, t('l.restored', { name: labour.name }))}>{t('l.restore')}</button>
+            <button className="btn btn-small" onClick={() => D.saveLabour({ ...labour, archived: false }, t('l.restored', { name: ln(labour) }))}>{t('l.restore')}</button>
           ) : (
             <button className="btn btn-small btn-danger-outline" onClick={archive}>{t('l.archiveBtn')}</button>
           )}
@@ -125,8 +126,8 @@ export default function Khata({ labour, onBack, initialPeriod }) {
           title={t('l.formEdit')}
           initial={labour}
           onClose={() => setEditing(false)}
-          onSave={(name, phone) => {
-            D.saveLabour({ ...labour, name, phone });
+          onSave={(name, phone, extra) => {
+            D.saveLabour({ ...labour, name, phone, ...extra });
             setEditing(false);
           }}
         />

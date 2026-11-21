@@ -32,6 +32,8 @@ export function buildBackup({ rate, labours, entries, expenses = [], xcats = [] 
     labours: labours.map((l) => {
       const out = { id: l.id, name: l.name, phone: l.phone || '', archived: !!l.archived };
       if (l.o !== undefined) out.o = l.o;
+      if (l.nameHi) out.nameHi = l.nameHi;
+      if (l.nameEn) out.nameEn = l.nameEn;
       if (l.ob && l.ob.d) out.ob = { d: l.ob.d, c: num(l.ob.c), m: num(l.ob.m) };
       return out;
     }),
@@ -76,6 +78,8 @@ export function parseBackup(text) {
       o: l.o !== undefined ? num(l.o) : i,
     };
     if (l.ob && isValidISO(l.ob.d)) lab.ob = { d: l.ob.d, c: num(l.ob.c), m: num(l.ob.m) };
+    if (l.nameHi) lab.nameHi = String(l.nameHi).trim();
+    if (l.nameEn) lab.nameEn = String(l.nameEn).trim();
     labours.push(lab);
   });
 

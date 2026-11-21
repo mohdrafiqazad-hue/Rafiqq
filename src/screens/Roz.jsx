@@ -4,6 +4,7 @@ import { DateBar, Stat } from '../components/common.jsx';
 import { dayReport, fmtRs } from '../lib/calc.js';
 import { dayText, openWhatsApp, parchiText } from '../lib/whatsapp.js';
 import { t } from '../i18n/index.js';
+import { ln } from '../lib/translit.js';
 import { weekStart } from '../lib/dates.js';
 import PendingBanner from '../components/PendingBanner.jsx';
 import { catIcon, catName, expensesIn, totalExpense } from '../lib/expenses.js';
@@ -56,7 +57,7 @@ export default function Roz({ date, setDate, openEntry, openKhata, openPending }
       {day.rows.map((r) => (
         <div key={r.labour.id} className={`card lrow ${r.entry ? '' : 'lrow-pending'}`}>
           <div className="lrow-head">
-            <button className="link-btn lrow-name" onClick={() => openKhata(r.labour.id, { mode: 'mahina', ym: date.slice(0, 7), ws: weekStart(date) })}>{r.labour.name} ›</button>
+            <button className="link-btn lrow-name" onClick={() => openKhata(r.labour.id, { mode: 'mahina', ym: date.slice(0, 7), ws: weekStart(date) })}>{ln(r.labour)} ›</button>
             {r.entry ? <span className="pill pill-green">{t('r.done')}</span> : <span className="pill pill-orange">{t('r.notDone')}</span>}
           </div>
           {r.entry && (
@@ -73,7 +74,7 @@ export default function Roz({ date, setDate, openEntry, openKhata, openPending }
             <span className="lrow-btns">
               <button className="btn btn-small" onClick={() => openKhata(r.labour.id, { mode: 'mahina', ym: date.slice(0, 7), ws: weekStart(date) })}>{t('h.record')}</button>
               <button className="btn btn-small" onClick={() => openEntry(r.labour.id)}>{r.entry ? (D.can.editEntry ? t('r.edit') : t('pm.view')) : t('r.add')}</button>
-              <button className="btn btn-small btn-wa" onClick={() => openWhatsApp(r.labour.phone, parchiText(r, date))} aria-label={t('r.sendParchi', { name: r.labour.name })}>
+              <button className="btn btn-small btn-wa" onClick={() => openWhatsApp(r.labour.phone, parchiText(r, date))} aria-label={t('r.sendParchi', { name: ln(r.labour) })}>
                 {t('r.parchi')}
               </button>
             </span>

@@ -6,6 +6,7 @@
 import { dayReport, periodReport, yearByMonth, ledger, money } from './calc.js';
 import { addDays, fmtDate, fmtDateLong, fmtDayShort, fmtMonth, fmtWeek, monthStart, monthEnd, weekEnd } from './dates.js';
 import { t } from '../i18n/index.js';
+import { ln, nameIn } from './translit.js';
 import { catName, expenseSummary } from './expenses.js';
 
 export const COMPANY = 'Madhur Ganga Minerals';
@@ -41,8 +42,8 @@ export function buildDayReport(labours, entries, date) {
     sections: [{
       columns: [wideCol('name', t('col.labour')), ...activityCols()],
       rows: d.rows.map((r) => (r.entry
-        ? [r.labour.name, r.t, r.r, r.p, r.bane, r.m, r.c, r.baaki]
-        : [t('rep.noEntry', { name: r.labour.name }), '-', '-', '-', '-', '-', r.c, r.baaki])),
+        ? [ln(r.labour), r.t, r.r, r.p, r.bane, r.m, r.c, r.baaki]
+        : [t('rep.noEntry', { name: ln(r.labour) }), '-', '-', '-', '-', '-', r.c, r.baaki])),
       total: totalRow(d.totals, ACT_KEYS),
     }],
   };
@@ -53,7 +54,7 @@ function labourPeriodSection(labours, entries, from, to, heading) {
   return {
     heading,
     columns: [wideCol('name', t('col.labour')), col('days', t('col.days')), ...activityCols()],
-    rows: p.rows.map((r) => [r.labour.name + (r.labour.archived ? t('c.archivedSuffix') : ''), r.days, r.t, r.r, r.p, r.bane, r.m, r.c, r.baaki]),
+    rows: p.rows.map((r) => [ln(r.labour) + (r.labour.archived ? t('c.archivedSuffix') : ''), r.days, r.t, r.r, r.p, r.bane, r.m, r.c, r.baaki]),
     rowIds: p.rows.map((r) => r.labour.id), // screen par naam dabakar record kholne ke liye
     total: [t('c.total'), p.rows.reduce((s, r) => s + r.days, 0), ...ACT_KEYS.map((k) => p.totals[k])],
   };
@@ -145,9 +146,9 @@ export function buildLabourReport(labour, entries, period) {
   const tot = L.totals;
   return {
     kind: 'labour',
-    title: t('rep.khataTitle', { name: labour.name }),
+    title: t('rep.khataTitle', { name: ln(labour) }),
     subtitle: `${label}${labour.phone ? ` · ${t('c.phone')}: ${labour.phone}` : ''}`,
-    file: `Khata_${asciiName(labour.name) || 'Labour'}_${periodFile(period)}`,
+    file: `Khata_${asciiName(nameIn(labour, 'en')) || 'Labour'}_${periodFile(period)}`,
     sections: [{
       columns: [
         wideCol('d', t('col.date')),

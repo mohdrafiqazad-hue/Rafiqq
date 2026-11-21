@@ -4,6 +4,7 @@ import { DateBar, DownloadBar, MonthBar, ReportTable, Segmented, WeekBar, YearBa
 import { buildDayReport, buildExpenseReport, buildLabourReport, buildMonthReport, buildWeekReport, buildYearReport, COMPANY } from '../lib/reports.js';
 import { today, weekStart } from '../lib/dates.js';
 import { t } from '../i18n/index.js';
+import { ln } from '../lib/translit.js';
 
 export function PeriodPicker({ period, setPeriod, noFull }) {
   const opts = [['hafta', t('m.week')], ['mahina', t('m.month')], ['saal', t('m.year')]];
@@ -65,7 +66,7 @@ export default function Report({ date, setDate }) {
       {type === 'labour' && (
         <>
           <select className="select" value={labour?.id || ''} onChange={(e) => setLabourId(e.target.value)} aria-label={t('rep.pickLabour')}>
-            {D.labours.map((l) => <option key={l.id} value={l.id}>{l.name}{l.archived ? t('c.archivedSuffix') : ''}</option>)}
+            {D.labours.map((l) => <option key={l.id} value={l.id}>{ln(l)}{l.archived ? t('c.archivedSuffix') : ''}</option>)}
           </select>
           <PeriodPicker period={period} setPeriod={setPeriod} />
         </>

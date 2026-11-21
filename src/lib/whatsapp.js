@@ -3,6 +3,7 @@ import { fmtRs, parchi as calcParchi } from './calc.js';
 import { fmtDate } from './dates.js';
 import { COMPANY } from './reports.js';
 import { t } from '../i18n/index.js';
+import { ln } from './translit.js';
 
 /** "98765 43210" -> "919876543210". Galat number ho to "" */
 export function waNumber(phone) {
@@ -24,7 +25,7 @@ export function openWhatsApp(phone, text) {
 /** Ek labour ki ek din ki parchi */
 export function parchiText(row, date) {
   const P = calcParchi({ c: row.prevC, m: row.prevM }, row, row.k);
-  const lines = [`*${COMPANY}*`, t('wa.parchi', { date: fmtDate(date) }), t('wa.labour', { name: row.labour.name }), ''];
+  const lines = [`*${COMPANY}*`, t('wa.parchi', { date: fmtDate(date) }), t('wa.labour', { name: ln(row.labour) }), ''];
   if (!row.entry) {
     lines.push(t('wa.noEntry'), '');
   } else {
@@ -48,8 +49,8 @@ export function parchiText(row, date) {
 export function dayText(day) {
   const lines = [`*${COMPANY}*`, t('wa.dayHead', { date: fmtDate(day.date) }), ''];
   for (const r of day.rows) {
-    if (!r.entry) lines.push(t('wa.dayNo', { name: r.labour.name, c: r.c, m: fmtRs(r.baaki) }));
-    else lines.push(t('wa.dayRow', { name: r.labour.name, t: r.t, r: r.r, p: r.p, m: fmtRs(r.m), c: r.c, b: fmtRs(r.baaki) }));
+    if (!r.entry) lines.push(t('wa.dayNo', { name: ln(r.labour), c: r.c, m: fmtRs(r.baaki) }));
+    else lines.push(t('wa.dayRow', { name: ln(r.labour), t: r.t, r: r.r, p: r.p, m: fmtRs(r.m), c: r.c, b: fmtRs(r.baaki) }));
   }
   const tt = day.totals;
   lines.push('', t('wa.dayTot', { t: tt.t, r: tt.r, p: tt.p, b: fmtRs(tt.bane), m: fmtRs(tt.m) }));
@@ -59,15 +60,15 @@ export function dayText(day) {
 
 /** Baaki paisa/cooler ki yaad */
 export function remindText(labour, c, m, date) {
-  return t('wa.remind', { name: labour.name, date: fmtDate(date), c, m: fmtRs(m) });
+  return t('wa.remind', { name: ln(labour), date: fmtDate(date), c, m: fmtRs(m) });
 }
 
 /** Poore hafte ka saar (sab labour). pr = periodReport(...) */
 export function weekText(pr, label) {
   const lines = [`*${COMPANY}*`, t('wa.weekHead', { label }), ''];
   for (const r of pr.rows) {
-    if (!r.days) lines.push(t('wa.weekNo', { name: r.labour.name, c: r.c, bal: fmtRs(r.baaki) }));
-    else lines.push(t('wa.weekRow', { name: r.labour.name, d: r.days, t: r.t, r: r.r, p: r.p, b: fmtRs(r.bane), m: fmtRs(r.m), c: r.c, bal: fmtRs(r.baaki) }));
+    if (!r.days) lines.push(t('wa.weekNo', { name: ln(r.labour), c: r.c, bal: fmtRs(r.baaki) }));
+    else lines.push(t('wa.weekRow', { name: ln(r.labour), d: r.days, t: r.t, r: r.r, p: r.p, b: fmtRs(r.bane), m: fmtRs(r.m), c: r.c, bal: fmtRs(r.baaki) }));
   }
   const tt = pr.totals;
   lines.push('', t('wa.weekTot', { t: tt.t, r: tt.r, p: tt.p, b: fmtRs(tt.bane), m: fmtRs(tt.m) }));
@@ -77,7 +78,7 @@ export function weekText(pr, label) {
 
 /** Labour ka khata (period) */
 export function khataText(labour, L, label) {
-  const lines = [`*${COMPANY}*`, t('wa.khHead', { name: labour.name }), label, ''];
+  const lines = [`*${COMPANY}*`, t('wa.khHead', { name: ln(labour) }), label, ''];
   lines.push(t('wa.khPrev', { c: L.opening.c, m: fmtRs(L.opening.baaki) }));
   const rows = L.rows.slice(-40);
   if (L.rows.length > rows.length) lines.push(t('wa.khSkip', { n: L.rows.length - rows.length }));

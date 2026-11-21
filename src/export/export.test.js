@@ -74,3 +74,13 @@ describe('files', () => {
     if (out) fs.writeFileSync(path.join(out, 'saal.xlsx'), buf);
   });
 });
+
+describe('Hindi PDF me nishaan', () => {
+  it('· Latin font se', () => {
+    expect(splitRuns('नव 2026 · कूलर')).toEqual([
+      { text: 'नव 2026 ', latin: false },
+      { text: '· ', latin: true },
+      { text: 'कूलर', latin: false },
+    ]);
+  });
+});

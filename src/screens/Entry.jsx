@@ -5,6 +5,7 @@ import { DateBar, MonthCalendar, NumField } from '../components/common.jsx';
 import { balanceBefore, fmtRs, nextPendingLabour, parchi } from '../lib/calc.js';
 import { addDays, fmtDate } from '../lib/dates.js';
 import { t } from '../i18n/index.js';
+import { ln } from '../lib/translit.js';
 
 const EMPTY = { t: '', r: '', p: '', m: '' };
 const toForm = (e) => (e ? { t: String(e.t ?? ''), r: String(e.r ?? ''), p: String(e.p ?? ''), m: String(e.m ?? '') } : EMPTY);
@@ -91,7 +92,7 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
     if (!anyValue && !existing) {
       const ok = await confirm({
         title: t('e.emptyTitle'),
-        message: t('e.emptyMsg', { name: labour.name, date: fmtDate(date) }),
+        message: t('e.emptyMsg', { name: ln(labour), date: fmtDate(date) }),
         okText: t('e.emptyOk'),
       });
       if (!ok) return;
@@ -124,7 +125,7 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
   const del = async () => {
     const ok = await confirm({
       title: t('e.delTitle'),
-      message: t('e.delMsg', { name: labour.name, date: fmtDate(date) }),
+      message: t('e.delMsg', { name: ln(labour), date: fmtDate(date) }),
       okText: t('e.delOk'),
       danger: true,
     });
@@ -155,7 +156,7 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
             onClick={() => setLabourId(l.id)}
           >
             {doneIds.has(l.id) && <span className="dot" aria-label={t('e.doneDot')} />}
-            {l.name}
+            {ln(l)}
           </button>
         ))}
       </div>
@@ -167,7 +168,7 @@ export default function Entry({ date, setDate, labourId, setLabourId, goTab }) {
         <div className="card entry-card">
           <div className="entry-head">
             <div>
-              <div className="entry-name">{labour.name}</div>
+              <div className="entry-name">{ln(labour)}</div>
               <div className="muted small">{t('e.prev', { c: prev.c, m: fmtRs(prev.m) })}</div>
             </div>
             {existing ? <span className="pill pill-green">{t('e.exists')}</span> : <span className="pill">{t('e.new')}</span>}

@@ -7,6 +7,7 @@ import { addDays, fmtDayShort, fmtWeek, weekEnd } from '../lib/dates.js';
 import { expenseSummary } from '../lib/expenses.js';
 import { khataText, openWhatsApp, weekText } from '../lib/whatsapp.js';
 import { t } from '../i18n/index.js';
+import { ln } from '../lib/translit.js';
 import PendingBanner from '../components/PendingBanner.jsx';
 
 export default function Hafta({ ws, setWs, openKhata, openDay, openPending }) {
@@ -78,7 +79,7 @@ export default function Hafta({ ws, setWs, openKhata, openDay, openPending }) {
         <div key={r.labour.id} className={`card lrow ${r.days ? '' : 'lrow-pending'}`}>
           <div className="lrow-head">
             <button className="link-btn lrow-name" onClick={() => openKhata(r.labour.id, period)}>
-              {r.labour.name}{r.labour.archived ? t('c.archivedSuffix') : ''} ›
+              {ln(r.labour)}{r.labour.archived ? t('c.archivedSuffix') : ''} ›
             </button>
             {r.days ? <span className="pill pill-green">{t('h.days', { n: r.days })}</span> : <span className="pill pill-orange">{t('h.noEntry')}</span>}
           </div>

@@ -106,10 +106,13 @@ export function DataProvider({ store, user, role = 'owner', team = null, onLogou
       },
       deleteEntry: (l, d) => run(store.deleteEntry(l, d), t('msg.deleted')),
       saveLabour: (lab, msg) => run(store.saveLabour(lab), msg || t('msg.labourSaved')),
-      addLabour: (name, phone) => {
+      addLabour: (name, phone, extra = {}) => {
         const id = store.newLabourId();
         const o = labours.reduce((mx, l) => Math.max(mx, Number(l.o) || 0), -1) + 1;
-        run(store.saveLabour({ id, name, phone, archived: false, o }), t('msg.labourAdded', { name }));
+        const names = {};
+        if (extra.nameHi) names.nameHi = extra.nameHi;
+        if (extra.nameEn) names.nameEn = extra.nameEn;
+        run(store.saveLabour({ id, name, phone, archived: false, o, ...names }), t('msg.labourAdded', { name }));
         return id;
       },
       setRate: (r) => run(store.setRate(r), t('msg.rate', { r: fmtRs(r) })),

@@ -42,6 +42,8 @@ export function splitRuns(text) {
     let latin;
     if (isLatinLetter(ch)) latin = true;
     else if (isDevanagari(ch)) latin = false;
+    // · “ ” … jaise nishaan Hindi font me nahi hote, Latin font se likho
+    else if (/[\u00A0-\u00FF\u2014\u2018-\u201D\u2022\u2026]/.test(ch)) latin = true;
     else latin = runs.length ? runs[runs.length - 1].latin : true;
     const last = runs[runs.length - 1];
     if (last && last.latin === latin) last.text += ch;
