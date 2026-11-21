@@ -57,6 +57,11 @@ export function dayText(day) {
   return lines.join('\n');
 }
 
+/** Baaki paisa/cooler ki yaad */
+export function remindText(labour, c, m, date) {
+  return t('wa.remind', { name: labour.name, date: fmtDate(date), c, m: fmtRs(m) });
+}
+
 /** Poore hafte ka saar (sab labour). pr = periodReport(...) */
 export function weekText(pr, label) {
   const lines = [`*${COMPANY}*`, t('wa.weekHead', { label }), ''];

@@ -71,14 +71,15 @@ function MainShell(props) {
   const [labourId, setLabourId] = useState(null);
   const [khata, setKhata] = useState(null); // { id, period } jab kisi labour ka record khula ho
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [labourFilter, setLabourFilter] = useState('all'); // all | paisa | cooler
   // Hafta / Mahina tab me chuna hua samay yaad rahe (record dekh kar wapis aane par bhi)
   const [weekWs, setWeekWs] = useState(() => weekStart(today()));
   const [mahinaView, setMahinaView] = useState(() => ({ mode: 'mahina', ws: weekStart(today()), ym: today().slice(0, 7), year: Number(today().slice(0, 4)) }));
-  const state = { tab, setTab, date, setDate, labourId, setLabourId, khata, setKhata, settingsOpen, setSettingsOpen, weekWs, setWeekWs, mahinaView, setMahinaView };
+  const state = { tab, setTab, date, setDate, labourId, setLabourId, khata, setKhata, settingsOpen, setSettingsOpen, weekWs, setWeekWs, mahinaView, setMahinaView, labourFilter, setLabourFilter };
   return <Main key={lang} {...props} {...state} />;
 }
 
-function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, setLabourId, khata, setKhata, settingsOpen, setSettingsOpen, weekWs, setWeekWs, mahinaView, setMahinaView }) {
+function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, setLabourId, khata, setKhata, settingsOpen, setSettingsOpen, weekWs, setWeekWs, mahinaView, setMahinaView, labourFilter, setLabourFilter }) {
   const D = useData();
   const tabs = D.can.seeReports ? TABS_ALL : TABS_LABOUR;
   const current = tabs.includes(tab) ? tab : 'entry';
@@ -86,6 +87,7 @@ function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, set
     setTab(k);
     setKhata(null);
     setSettingsOpen(false);
+    setLabourFilter('all');
     window.scrollTo(0, 0);
   };
   /** Labour ke naam par dabane se uska record (hafta / mahina / saal / poora) */
@@ -94,6 +96,11 @@ function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, set
     window.scrollTo(0, 0);
   };
   const khataLabour = khata && D.can.seeReports ? D.labourById.get(khata.id) : null;
+  /** Baaki wali patti se: Labour tab me sirf paisa-baaki ya cooler-baaki wale */
+  const openPending = (f) => {
+    goTab('labour');
+    setLabourFilter(f);
+  };
   const openEntry = (id) => {
     setLabourId(id);
     goTab('entry');
@@ -126,12 +133,12 @@ function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, set
         ) : (
           <>
             {current === 'entry' && <Entry date={date} setDate={setDate} labourId={labourId} setLabourId={setLabourId} goTab={goTab} />}
-            {current === 'roz' && <Roz date={date} setDate={setDate} openEntry={openEntry} openKhata={openKhata} />}
-            {current === 'hafta' && <Hafta ws={weekWs} setWs={setWeekWs} openKhata={openKhata} openDay={(d) => { setDate(d); goTab('roz'); }} />}
+            {current === 'roz' && <Roz date={date} setDate={setDate} openEntry={openEntry} openKhata={openKhata} openPending={openPending} />}
+            {current === 'hafta' && <Hafta ws={weekWs} setWs={setWeekWs} openKhata={openKhata} openPending={openPending} openDay={(d) => { setDate(d); goTab('roz'); }} />}
             {current === 'mahina' && <Mahina view={mahinaView} setView={setMahinaView} openKhata={openKhata} />}
             {current === 'kharcha' && <Kharcha />}
             {current === 'report' && <Report date={date} setDate={setDate} />}
-            {current === 'labour' && <Labours setKhataId={(id) => openKhata(id)} showSettings={settingsOpen} setShowSettings={setSettingsOpen} />}
+            {current === 'labour' && <Labours setKhataId={(id) => openKhata(id)} showSettings={settingsOpen} setShowSettings={setSettingsOpen} filter={labourFilter} setFilter={setLabourFilter} />}
             {current === 'settings' && <Settings />}
           </>
         )}

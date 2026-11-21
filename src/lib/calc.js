@@ -261,6 +261,30 @@ export function ledger(labour, entries, from = null, to = null) {
   return { opening, rows, totals };
 }
 
+/**
+ * Kis-kis par baaki hai (kisi date tak): paisa lena baaki (>0) aur cooler market me (>0), bade se chhote.
+ * Hataye gaye labour bhi aate hain agar unka kuch baaki hai.
+ */
+export function pendingLists(labours, entries, date) {
+  const byL = groupByLabour(entries);
+  const money = [];
+  const cooler = [];
+  for (const labour of sortLabours(labours)) {
+    const b = balanceAt(labour, byL.get(labour.id) || [], date);
+    if (b.m > 0) money.push({ labour, m: b.m, c: b.c });
+    if (b.c > 0) cooler.push({ labour, m: b.m, c: b.c });
+  }
+  money.sort((a, b) => b.m - a.m);
+  cooler.sort((a, b) => b.c - a.c);
+  return {
+    money,
+    cooler,
+    totalMoney: money.reduce((s, x) => money2(s + x.m), 0),
+    totalCooler: cooler.reduce((s, x) => s + x.c, 0),
+  };
+}
+const money2 = (x) => Math.round(x * 100) / 100;
+
 /** Rupaye dikhane ka tareeka: "₹1,250" ya "-₹50" */
 export function fmtRs(x) {
   const v = money(x);

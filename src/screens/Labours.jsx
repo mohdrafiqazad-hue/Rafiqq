@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useData } from '../data/DataContext.jsx';
 import { Sheet, useUI } from '../components/ui.jsx';
-import { balanceAt, fmtRs } from '../lib/calc.js';
+import { balanceAt, fmtRs, pendingLists } from '../lib/calc.js';
+import { openWhatsApp, remindText } from '../lib/whatsapp.js';
 import { today } from '../lib/dates.js';
 import Settings from './Settings.jsx';
 import { t } from '../i18n/index.js';
@@ -36,7 +37,25 @@ export function LabourForm({ initial, onSave, onClose, title }) {
   );
 }
 
-export default function Labours({ setKhataId, showSettings, setShowSettings }) {
+/** Baaki paisa / cooler ke do highlighted dabbe (dabane par filter) */
+export function PendingBoxes({ pending, filter, onPick }) {
+  return (
+    <div className="pend-boxes">
+      <button className={`pend-box pend-money ${filter === 'paisa' ? 'on' : ''}`} onClick={() => onPick(filter === 'paisa' ? 'all' : 'paisa')}>
+        <span className="pend-title">{t('pd.money')}</span>
+        <b className="pend-val">{fmtRs(pending.totalMoney)}</b>
+        <span className="pend-sub">{t('pd.count', { n: pending.money.length })}</span>
+      </button>
+      <button className={`pend-box pend-cooler ${filter === 'cooler' ? 'on' : ''}`} onClick={() => onPick(filter === 'cooler' ? 'all' : 'cooler')}>
+        <span className="pend-title">{t('pd.cooler')}</span>
+        <b className="pend-val">{pending.totalCooler}</b>
+        <span className="pend-sub">{t('pd.count', { n: pending.cooler.length })}</span>
+      </button>
+    </div>
+  );
+}
+
+export default function Labours({ setKhataId, showSettings, setShowSettings, filter = 'all', setFilter }) {
   const D = useData();
   const { confirm } = useUI();
   const [adding, setAdding] = useState(false);
@@ -45,24 +64,36 @@ export default function Labours({ setKhataId, showSettings, setShowSettings }) {
   if (showSettings) return <Settings onBack={() => setShowSettings(false)} />;
 
   const td = today();
-  const card = (l) => {
+  const pending = pendingLists(D.labours, D.entries, td);
+  const card = (l, focus) => {
     const b = balanceAt(l, D.byLabour.get(l.id) || [], td);
+    const owes = b.m > 0;
+    const out = b.c > 0;
     return (
-      <button key={l.id} className="card labour-card" onClick={() => setKhataId(l.id)}>
-        <div>
-          <div className="labour-name">{l.name}</div>
-          <div className="muted small">{l.phone || t('l.noPhone')}</div>
-        </div>
-        <div className="labour-bal">
-          <div><b>{b.c}</b> {t('c.cooler')}</div>
-          <div className={b.m < 0 ? 'neg' : ''}><b>{fmtRs(b.m)}</b></div>
-        </div>
-        <span className="chev">›</span>
-      </button>
+      <div key={l.id} className={`card labour-card ${focus === 'paisa' ? 'hl-money' : focus === 'cooler' ? 'hl-cooler' : owes ? 'edge-money' : ''}`}>
+        <button className="labour-card-main" onClick={() => setKhataId(l.id)}>
+          <div className="labour-card-text">
+            <div className="labour-name">{l.name}{l.archived ? t('c.archivedSuffix') : ''}</div>
+            <div className="muted small">{l.phone || t('l.noPhone')}</div>
+          </div>
+          <div className="labour-bal">
+            <span className={`pill ${out ? 'pill-cool' : ''}`}>{b.c} {t('c.cooler')}</span>
+            <span className={`pill ${owes ? 'pill-money' : b.m < 0 ? 'pill-neg' : ''}`}>{fmtRs(b.m)}</span>
+          </div>
+          <span className="chev">›</span>
+        </button>
+        {focus && (owes || out) && (
+          <button className="btn btn-small btn-wa remind-btn" onClick={() => openWhatsApp(l.phone, remindText(l, b.c, b.m, td))}>
+            🟢 {t('pd.remind')}
+          </button>
+        )}
+      </div>
     );
   };
 
   const archived = D.labours.filter((l) => l.archived);
+  const pickFilter = (f) => setFilter?.(f);
+  const focusList = filter === 'paisa' ? pending.money : filter === 'cooler' ? pending.cooler : null;
 
   return (
     <div className="screen">
@@ -71,10 +102,23 @@ export default function Labours({ setKhataId, showSettings, setShowSettings }) {
         <button className="btn btn-big" onClick={() => setShowSettings(true)} aria-label={t('s.title')}>{t('l.settings')}</button>
       </div>
 
-      {!D.active.length && <div className="empty-card">{t('l.empty')}</div>}
-      {D.active.map(card)}
+      <PendingBoxes pending={pending} filter={filter} onPick={pickFilter} />
+      <p className="muted small note">{t('pd.asOf')}</p>
 
-      {archived.length > 0 && (
+      {focusList ? (
+        <>
+          <button className="link-btn" onClick={() => pickFilter('all')}>‹ {t('pd.all')}</button>
+          {!focusList.length && <div className="empty-card">{filter === 'paisa' ? t('pd.noneMoney') : t('pd.noneCooler')}</div>}
+          {focusList.map((x) => card(x.labour, filter))}
+        </>
+      ) : (
+        <>
+          {!D.active.length && <div className="empty-card">{t('l.empty')}</div>}
+          {D.active.map((l) => card(l, null))}
+        </>
+      )}
+
+      {!focusList && archived.length > 0 && (
         <>
           <button className="link-btn archived-toggle" onClick={() => setShowArchived((s) => !s)}>
             {showArchived ? '▾' : '▸'} {t('l.archived', { n: archived.length })}

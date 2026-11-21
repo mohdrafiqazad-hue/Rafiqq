@@ -7,8 +7,9 @@ import { addDays, fmtDayShort, fmtWeek, weekEnd } from '../lib/dates.js';
 import { expenseSummary } from '../lib/expenses.js';
 import { khataText, openWhatsApp, weekText } from '../lib/whatsapp.js';
 import { t } from '../i18n/index.js';
+import PendingBanner from '../components/PendingBanner.jsx';
 
-export default function Hafta({ ws, setWs, openKhata, openDay }) {
+export default function Hafta({ ws, setWs, openKhata, openDay, openPending }) {
   const D = useData();
   const we = weekEnd(ws);
   const label = fmtWeek(ws);
@@ -26,6 +27,7 @@ export default function Hafta({ ws, setWs, openKhata, openDay }) {
   return (
     <div className="screen">
       <WeekBar ws={ws} onChange={setWs} />
+      <PendingBanner onOpen={openPending} />
 
       <div className="card">
         <div className="card-title">{t('h.total')}</div>
@@ -90,7 +92,7 @@ export default function Hafta({ ws, setWs, openKhata, openDay }) {
             </div>
           )}
           <div className="lrow-foot">
-            <span>{t('h.balEnd')}: <b>{r.c} {t('c.cooler')}</b> · <b className={r.baaki < 0 ? 'neg' : ''}>{fmtRs(r.baaki)}</b></span>
+            <span className="bal-pills">{t('h.balEnd')}: <span className={`pill ${r.c > 0 ? 'pill-cool' : ''}`}>{r.c} {t('c.cooler')}</span> <span className={`pill ${r.baaki > 0 ? 'pill-money' : r.baaki < 0 ? 'pill-neg' : ''}`}>{fmtRs(r.baaki)}</span></span>
             <span className="lrow-btns">
               <button className="btn btn-small" onClick={() => openKhata(r.labour.id, period)}>{t('h.record')}</button>
               <button

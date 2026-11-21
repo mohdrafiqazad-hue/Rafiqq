@@ -5,9 +5,10 @@ import { dayReport, fmtRs } from '../lib/calc.js';
 import { dayText, openWhatsApp, parchiText } from '../lib/whatsapp.js';
 import { t } from '../i18n/index.js';
 import { weekStart } from '../lib/dates.js';
+import PendingBanner from '../components/PendingBanner.jsx';
 import { catIcon, catName, expensesIn, totalExpense } from '../lib/expenses.js';
 
-export default function Roz({ date, setDate, openEntry, openKhata }) {
+export default function Roz({ date, setDate, openEntry, openKhata, openPending }) {
   const D = useData();
   const day = useMemo(() => dayReport(D.labours, D.entries, date), [D.labours, D.entries, date]);
   const tt = day.totals;
@@ -17,6 +18,7 @@ export default function Roz({ date, setDate, openEntry, openKhata }) {
   return (
     <div className="screen">
       <DateBar date={date} onChange={setDate} />
+      <PendingBanner onOpen={openPending} />
 
       <div className="card">
         <div className="card-title">{t('r.dayTotal')}</div>
@@ -67,7 +69,7 @@ export default function Roz({ date, setDate, openEntry, openKhata }) {
             </div>
           )}
           <div className="lrow-foot">
-            <span>{t('r.kulBaaki')} <b>{r.c} {t('c.cooler')}</b> · <b className={r.baaki < 0 ? 'neg' : ''}>{fmtRs(r.baaki)}</b></span>
+            <span className="bal-pills">{t('r.kulBaaki')} <span className={`pill ${r.c > 0 ? 'pill-cool' : ''}`}>{r.c} {t('c.cooler')}</span> <span className={`pill ${r.baaki > 0 ? 'pill-money' : r.baaki < 0 ? 'pill-neg' : ''}`}>{fmtRs(r.baaki)}</span></span>
             <span className="lrow-btns">
               <button className="btn btn-small" onClick={() => openKhata(r.labour.id, { mode: 'mahina', ym: date.slice(0, 7), ws: weekStart(date) })}>{t('h.record')}</button>
               <button className="btn btn-small" onClick={() => openEntry(r.labour.id)}>{r.entry ? (D.can.editEntry ? t('r.edit') : t('pm.view')) : t('r.add')}</button>

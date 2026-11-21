@@ -343,3 +343,32 @@ label.datebar-label .hidden-date { pointer-events: auto; }
 .week-day-vals b { color: var(--text); }
 .lrow-btns { flex-wrap: wrap; }
 .kul-baaki b span { white-space: nowrap; }
+
+/* ---------- Baaki (pending) highlight ---------- */
+.pill-money { background: #fde8e8; color: #b3261e; border: 1px solid #f3b4b0; font-weight: 800; }
+.pill-cool { background: #e2efff; color: #1d4fa3; border: 1px solid #b4cff5; font-weight: 800; }
+.pill-neg { background: #eef1f4; color: var(--red); }
+.pend-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pend-box { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px; border-radius: var(--radius); text-align: left; border: 2px solid transparent; }
+.pend-box.pend-money { background: #fdecec; border-color: #f3b4b0; color: #8c1d18; }
+.pend-box.pend-cooler { background: #e8f1ff; border-color: #b4cff5; color: #163f82; }
+.pend-box.on { box-shadow: 0 0 0 3px rgba(13,102,136,.25); transform: translateY(-1px); }
+.pend-box.pend-money.on { border-color: #b3261e; }
+.pend-box.pend-cooler.on { border-color: #1d4fa3; }
+.pend-title { font-size: 13px; font-weight: 700; }
+.pend-val { font-size: 24px; font-weight: 900; line-height: 1.2; }
+.pend-sub { font-size: 12px; opacity: .85; }
+.pend-banner { display: flex; gap: 8px; flex-wrap: wrap; }
+.pend-chip { flex: 1; min-width: 140px; min-height: 42px; border-radius: 12px; font-weight: 800; font-size: 15px; border: 1.5px solid; padding: 6px 10px; }
+.pend-chip small { font-weight: 600; }
+.pend-chip.pend-money { background: #fdecec; border-color: #f3b4b0; color: #8c1d18; }
+.pend-chip.pend-cooler { background: #e8f1ff; border-color: #b4cff5; color: #163f82; }
+.labour-card { flex-direction: column; align-items: stretch; gap: 8px; padding: 0; overflow: hidden; }
+.labour-card-main { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; text-align: left; padding: 14px; }
+.labour-card-text { flex: 1; min-width: 0; }
+.labour-card .labour-bal { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.labour-card.hl-money { border: 2px solid #f3b4b0; background: #fffafa; }
+.labour-card.hl-cooler { border: 2px solid #b4cff5; background: #f9fbff; }
+.labour-card.edge-money { border-left: 5px solid #e57373; }
+.remind-btn { margin: 0 14px 12px; }
+.bal-pills { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }

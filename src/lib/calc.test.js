@@ -215,3 +215,22 @@ describe('hafta (week)', () => {
     expect(days.total.slice(6)).toEqual([27, 230]); // A: 15/20, B: 12/210
   });
 });
+
+
+import { pendingLists } from './calc.js';
+
+describe('baaki wale (pending)', () => {
+  it('paisa aur cooler alag-alag, bade se chhote', () => {
+    // 2 Nov tak: A 13 cooler / -50 (paisa nahi lena), B 12 cooler / 210, C (hataya) 0 / 0
+    const p = pendingLists(labours, entries, '2026-11-02');
+    expect(p.money.map((x) => [x.labour.id, x.m])).toEqual([['B', 210]]);
+    expect(p.cooler.map((x) => [x.labour.id, x.c])).toEqual([['A', 13], ['B', 12]]);
+    expect(p.totalMoney).toBe(210);
+    expect(p.totalCooler).toBe(25);
+  });
+  it('saal ke aakhir tak', () => {
+    const p = pendingLists(labours, entries, '2026-12-31');
+    expect(p.money.map((x) => [x.labour.id, x.m])).toEqual([['B', 210], ['A', 10]]);
+    expect(p.cooler.map((x) => [x.labour.id, x.c])).toEqual([['A', 18], ['B', 12]]);
+  });
+});
