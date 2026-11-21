@@ -3,7 +3,6 @@ import { useData } from '../data/DataContext.jsx';
 import { Sheet, useUI } from '../components/ui.jsx';
 import { balanceAt, fmtRs } from '../lib/calc.js';
 import { today } from '../lib/dates.js';
-import Khata from './Khata.jsx';
 import Settings from './Settings.jsx';
 import { t } from '../i18n/index.js';
 
@@ -37,14 +36,12 @@ export function LabourForm({ initial, onSave, onClose, title }) {
   );
 }
 
-export default function Labours({ khataId, setKhataId, showSettings, setShowSettings }) {
+export default function Labours({ setKhataId, showSettings, setShowSettings }) {
   const D = useData();
   const { confirm } = useUI();
   const [adding, setAdding] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
 
-  const khataLabour = khataId ? D.labourById.get(khataId) : null;
-  if (khataLabour) return <Khata labour={khataLabour} onBack={() => setKhataId(null)} />;
   if (showSettings) return <Settings onBack={() => setShowSettings(false)} />;
 
   const td = today();

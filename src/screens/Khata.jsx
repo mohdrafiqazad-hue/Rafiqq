@@ -46,10 +46,10 @@ function OpeningForm({ labour, onSave, onRemove, onClose, hasEntriesBefore }) {
   );
 }
 
-export default function Khata({ labour, onBack }) {
+export default function Khata({ labour, onBack, initialPeriod }) {
   const D = useData();
   const { confirm } = useUI();
-  const [period, setPeriod] = useState(defaultPeriod);
+  const [period, setPeriod] = useState(() => ({ ...defaultPeriod(), ...(initialPeriod || {}) }));
   const [editing, setEditing] = useState(false);
   const [opening, setOpening] = useState(false);
 

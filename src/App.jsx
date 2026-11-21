@@ -3,7 +3,7 @@ import { isFirebaseConfigured } from './firebase-config.js';
 import { DataProvider, useData } from './data/DataContext.jsx';
 import { createLocalStore } from './data/localAdapter.js';
 import { useUI } from './components/ui.jsx';
-import { today } from './lib/dates.js';
+import { today, weekStart } from './lib/dates.js';
 import Entry from './screens/Entry.jsx';
 import Roz from './screens/Roz.jsx';
 import Mahina from './screens/Mahina.jsx';
@@ -11,6 +11,8 @@ import Report from './screens/Report.jsx';
 import Labours from './screens/Labours.jsx';
 import Login from './screens/Login.jsx';
 import Kharcha from './screens/Kharcha.jsx';
+import Hafta from './screens/Hafta.jsx';
+import Khata from './screens/Khata.jsx';
 import Settings from './screens/Settings.jsx';
 import Waiting from './screens/Waiting.jsx';
 import { TabIcon } from './components/Icons.jsx';
@@ -19,7 +21,7 @@ import { useLang } from './i18n/LangContext.jsx';
 import { COMPANY } from './lib/reports.js';
 
 // Role ke hisab se tabs: labour ko sirf Entry aur Settings
-const TABS_ALL = ['entry', 'roz', 'mahina', 'kharcha', 'report', 'labour'];
+const TABS_ALL = ['entry', 'roz', 'hafta', 'mahina', 'kharcha', 'report', 'labour'];
 const TABS_LABOUR = ['entry', 'settings'];
 
 const ACTIVE_ROLES = ['owner', 'manager', 'labour'];
@@ -67,22 +69,31 @@ function MainShell(props) {
   const [tab, setTab] = useState('entry');
   const [date, setDate] = useState(today());
   const [labourId, setLabourId] = useState(null);
-  const [khataId, setKhataId] = useState(null);
+  const [khata, setKhata] = useState(null); // { id, period } jab kisi labour ka record khula ho
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const state = { tab, setTab, date, setDate, labourId, setLabourId, khataId, setKhataId, settingsOpen, setSettingsOpen };
+  // Hafta / Mahina tab me chuna hua samay yaad rahe (record dekh kar wapis aane par bhi)
+  const [weekWs, setWeekWs] = useState(() => weekStart(today()));
+  const [mahinaView, setMahinaView] = useState(() => ({ mode: 'mahina', ws: weekStart(today()), ym: today().slice(0, 7), year: Number(today().slice(0, 4)) }));
+  const state = { tab, setTab, date, setDate, labourId, setLabourId, khata, setKhata, settingsOpen, setSettingsOpen, weekWs, setWeekWs, mahinaView, setMahinaView };
   return <Main key={lang} {...props} {...state} />;
 }
 
-function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, setLabourId, khataId, setKhataId, settingsOpen, setSettingsOpen }) {
+function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, setLabourId, khata, setKhata, settingsOpen, setSettingsOpen, weekWs, setWeekWs, mahinaView, setMahinaView }) {
   const D = useData();
   const tabs = D.can.seeReports ? TABS_ALL : TABS_LABOUR;
   const current = tabs.includes(tab) ? tab : 'entry';
   const goTab = (k) => {
     setTab(k);
-    setKhataId(null);
+    setKhata(null);
     setSettingsOpen(false);
     window.scrollTo(0, 0);
   };
+  /** Labour ke naam par dabane se uska record (hafta / mahina / saal / poora) */
+  const openKhata = (id, period) => {
+    setKhata({ id, period });
+    window.scrollTo(0, 0);
+  };
+  const khataLabour = khata && D.can.seeReports ? D.labourById.get(khata.id) : null;
   const openEntry = (id) => {
     setLabourId(id);
     goTab('entry');
@@ -110,13 +121,20 @@ function Main({ updateReady, onUpdate, tab, setTab, date, setDate, labourId, set
         <button className="update-banner" onClick={onUpdate}>{t('banner.update')}</button>
       )}
       <main>
-        {current === 'entry' && <Entry date={date} setDate={setDate} labourId={labourId} setLabourId={setLabourId} goTab={goTab} />}
-        {current === 'roz' && <Roz date={date} setDate={setDate} openEntry={openEntry} />}
-        {current === 'mahina' && <Mahina />}
-        {current === 'kharcha' && <Kharcha />}
-        {current === 'report' && <Report date={date} setDate={setDate} />}
-        {current === 'labour' && <Labours khataId={khataId} setKhataId={setKhataId} showSettings={settingsOpen} setShowSettings={setSettingsOpen} />}
-        {current === 'settings' && <Settings />}
+        {khataLabour ? (
+          <Khata key={khataLabour.id} labour={khataLabour} initialPeriod={khata.period} onBack={() => setKhata(null)} />
+        ) : (
+          <>
+            {current === 'entry' && <Entry date={date} setDate={setDate} labourId={labourId} setLabourId={setLabourId} goTab={goTab} />}
+            {current === 'roz' && <Roz date={date} setDate={setDate} openEntry={openEntry} openKhata={openKhata} />}
+            {current === 'hafta' && <Hafta ws={weekWs} setWs={setWeekWs} openKhata={openKhata} openDay={(d) => { setDate(d); goTab('roz'); }} />}
+            {current === 'mahina' && <Mahina view={mahinaView} setView={setMahinaView} openKhata={openKhata} />}
+            {current === 'kharcha' && <Kharcha />}
+            {current === 'report' && <Report date={date} setDate={setDate} />}
+            {current === 'labour' && <Labours setKhataId={(id) => openKhata(id)} showSettings={settingsOpen} setShowSettings={setSettingsOpen} />}
+            {current === 'settings' && <Settings />}
+          </>
+        )}
       </main>
       <nav className="tabbar">
         {tabs.map((k) => (

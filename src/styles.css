@@ -332,3 +332,14 @@ label.datebar-label .hidden-date { pointer-events: auto; }
 .cal-legend .lg { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -2px; }
 .lg.full { background: #bfe6cb; }
 .lg.part { background: #ffd9a8; }
+
+/* ---------- Hafta tab / record links ---------- */
+.cell-link { color: var(--brand); text-decoration: underline; text-underline-offset: 2px; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.week-days { padding: 10px 14px; }
+.week-day { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; border-top: 1px solid #eef1f4; padding: 9px 0; text-align: left; font-size: 15px; }
+.week-day:active { background: #f5f8fa; }
+.week-day-name { flex: 1; font-weight: 600; }
+.week-day-vals { display: flex; gap: 12px; color: var(--muted); font-size: 14px; }
+.week-day-vals b { color: var(--text); }
+.lrow-btns { flex-wrap: wrap; }
+.kul-baaki b span { white-space: nowrap; }

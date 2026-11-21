@@ -57,6 +57,19 @@ export function dayText(day) {
   return lines.join('\n');
 }
 
+/** Poore hafte ka saar (sab labour). pr = periodReport(...) */
+export function weekText(pr, label) {
+  const lines = [`*${COMPANY}*`, t('wa.weekHead', { label }), ''];
+  for (const r of pr.rows) {
+    if (!r.days) lines.push(t('wa.weekNo', { name: r.labour.name, c: r.c, bal: fmtRs(r.baaki) }));
+    else lines.push(t('wa.weekRow', { name: r.labour.name, d: r.days, t: r.t, r: r.r, p: r.p, b: fmtRs(r.bane), m: fmtRs(r.m), c: r.c, bal: fmtRs(r.baaki) }));
+  }
+  const tt = pr.totals;
+  lines.push('', t('wa.weekTot', { t: tt.t, r: tt.r, p: tt.p, b: fmtRs(tt.bane), m: fmtRs(tt.m) }));
+  lines.push(t('wa.dayBal', { c: tt.c, m: fmtRs(tt.baaki) }));
+  return lines.join('\n');
+}
+
 /** Labour ka khata (period) */
 export function khataText(labour, L, label) {
   const lines = [`*${COMPANY}*`, t('wa.khHead', { name: labour.name }), label, ''];

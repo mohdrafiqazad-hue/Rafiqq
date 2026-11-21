@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useData } from '../data/DataContext.jsx';
 import { MonthBar, ReportTable, Segmented, Stat, WeekBar, YearBar } from '../components/common.jsx';
 import { buildMonthReport, buildWeekReport, buildYearReport } from '../lib/reports.js';
 import { fmtRs } from '../lib/calc.js';
-import { monthEnd, monthStart, today, weekEnd, weekStart } from '../lib/dates.js';
+import { monthEnd, monthStart, weekEnd } from '../lib/dates.js';
 import { expenseSummary } from '../lib/expenses.js';
 import { t } from '../i18n/index.js';
 
@@ -30,12 +30,13 @@ function Totals({ tot, x }) {
   );
 }
 
-export default function Mahina() {
+export default function Mahina({ view, setView, openKhata }) {
   const D = useData();
-  const [mode, setMode] = useState('mahina');
-  const [ws, setWs] = useState(weekStart(today()));
-  const [ym, setYm] = useState(today().slice(0, 7));
-  const [year, setYear] = useState(Number(today().slice(0, 4)));
+  const { mode, ws, ym, year } = view;
+  const setMode = (v) => setView((s) => ({ ...s, mode: v }));
+  const setWs = (v) => setView((s) => ({ ...s, ws: v }));
+  const setYm = (v) => setView((s) => ({ ...s, ym: v }));
+  const setYear = (v) => setView((s) => ({ ...s, year: v }));
 
   const report = useMemo(
     () => (mode === 'hafta'
@@ -61,7 +62,14 @@ export default function Mahina() {
       {mode === 'saal' && <YearBar year={year} onChange={setYear} />}
       <Totals tot={labourSec.total} x={x} />
       <p className="muted small note">{mode === 'hafta' ? t('m.noteWeek') : mode === 'mahina' ? t('m.noteMonth') : t('m.noteYear')}</p>
-      {report.sections.map((s, i) => <ReportTable key={i} section={s} />)}
+      <p className="muted small note">{t('h.tapName')}</p>
+      {report.sections.map((s, i) => (
+        <ReportTable
+          key={i}
+          section={s}
+          onRowClick={openKhata ? (id) => openKhata(id, { mode, ws, ym, year }) : undefined}
+        />
+      ))}
     </div>
   );
 }

@@ -54,6 +54,7 @@ function labourPeriodSection(labours, entries, from, to, heading) {
     heading,
     columns: [wideCol('name', t('col.labour')), col('days', t('col.days')), ...activityCols()],
     rows: p.rows.map((r) => [r.labour.name + (r.labour.archived ? t('c.archivedSuffix') : ''), r.days, r.t, r.r, r.p, r.bane, r.m, r.c, r.baaki]),
+    rowIds: p.rows.map((r) => r.labour.id), // screen par naam dabakar record kholne ke liye
     total: [t('c.total'), p.rows.reduce((s, r) => s + r.days, 0), ...ACT_KEYS.map((k) => p.totals[k])],
   };
 }

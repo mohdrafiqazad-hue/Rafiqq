@@ -185,7 +185,8 @@ export function NumField({ label, value, onChange, decimal = false, allowNegativ
 }
 
 /** Report model ko table ki tarah dikhana */
-export function ReportTable({ section }) {
+/** onRowClick(id): agar section.rowIds ho to pehle khane (naam) par dabane se */
+export function ReportTable({ section, onRowClick }) {
   return (
     <div className="table-wrap">
       {section.heading && <h4 className="table-heading">{section.heading}</h4>}
@@ -199,7 +200,9 @@ export function ReportTable({ section }) {
               <tr key={i}>
                 {row.map((cell, j) => (
                   <td key={j} className={`${section.columns[j].align === 'right' ? 'num' : ''} ${typeof cell === 'number' && cell < 0 ? 'neg' : ''}`}>
-                    {fmtCell(cell, section.columns[j])}
+                    {j === 0 && onRowClick && section.rowIds?.[i]
+                      ? <button className="link-btn cell-link" onClick={() => onRowClick(section.rowIds[i])}>{fmtCell(cell, section.columns[j])}</button>
+                      : fmtCell(cell, section.columns[j])}
                   </td>
                 ))}
               </tr>

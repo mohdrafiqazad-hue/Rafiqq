@@ -2,6 +2,7 @@
 const P = {
   entry: <><path d="M12 5v14M5 12h14" /></>,
   roz: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M9 3v4M15 3v4" /></>,
+  hafta: <><rect x="3" y="5" width="18" height="15" rx="2" /><path d="M3 10h18M8 3v4M16 3v4M6 14h2M11 14h2M16 14h2" /></>,
   mahina: <><path d="M5 20V10M12 20V4M19 20v-7" /></>,
   report: <><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h6" /></>,
   kharcha: <><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M16 15h2" /></>,
